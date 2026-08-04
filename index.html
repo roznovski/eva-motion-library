@@ -47,13 +47,19 @@
     animation: rise 600ms var(--motion-easing-decelerate) forwards;
   }
   @keyframes rise { to { opacity: 1; transform: translateY(0); } }
-  .intro .kicker { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin: 0 0 14px; }
+  .intro .kicker { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); font-weight: 600; margin: 0 0 14px; }
   .intro h1 { font-size: 34px; line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 12px; max-width: 620px; }
   .intro p { font-size: 15px; color: #6b6b66; max-width: 540px; line-height: 1.6; margin: 0; }
 
   /* ---------- Interaction block (repeat this whole section per scenario) ---------- */
   .interaction { padding: 44px 0; border-top: 1px solid var(--border); }
-  .interaction h2 { font-size: 18px; font-weight: 600; margin: 0 0 20px; }
+  .interaction h2 { font-size: 18px; font-weight: 600; margin: 0; }
+  .interaction-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .figma-link {
+    font-size: 12.5px; color: var(--ink); text-decoration: none; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .figma-link:hover { text-decoration: underline; }
 
   .compare { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--card); }
   .compare-col { padding: 32px 24px 28px; text-align: center; position: relative; border-top: 3px solid transparent; }
@@ -75,9 +81,26 @@
     background: var(--paper); border: 1px solid var(--border); border-radius: 100px; padding: 7px 14px 7px 10px;
     cursor: pointer; white-space: nowrap; user-select: none; margin-top: 16px;
   }
-  .slow-toggle input { accent-color: var(--accent); }
+  .slow-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+  .mini-checkbox { position: relative; width: 16px; height: 16px; flex-shrink: 0; display: inline-flex; }
+  .mini-checkbox svg { display: block; }
+  .mini-checkbox .outline { transition: stroke var(--motion-duration-fast) var(--motion-easing-standard); }
+  .mini-checkbox .clip-circle { transition: r var(--motion-duration-quick) var(--motion-easing-spring); }
 
-  .code-tabs { margin-top: 20px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .code-toggle { margin-top: 20px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .code-toggle summary {
+    cursor: pointer; list-style: none; padding: 12px 16px; font-size: 13px; font-weight: 500;
+    color: var(--ink); background: var(--paper); display: flex; align-items: center; gap: 8px;
+    user-select: none;
+  }
+  .code-toggle summary::-webkit-details-marker { display: none; }
+  .code-toggle summary::before {
+    content: '▸'; font-size: 10px; color: #a3a39c;
+    transition: transform var(--motion-duration-quick) var(--motion-easing-standard);
+  }
+  .code-toggle[open] summary::before { transform: rotate(90deg); }
+  .code-toggle[open] summary { border-bottom: 1px solid var(--border); }
+  .code-tabs { margin-top: 0; border: none; border-radius: 0; overflow: hidden; }
   .tab-buttons { display: flex; background: var(--paper); border-bottom: 1px solid var(--border); }
   .tab-btn {
     font-size: 12.5px; font-weight: 500; color: #8a8a84; background: transparent; border: none;
@@ -96,15 +119,62 @@
 
   .wishlist-btn { position: relative; width: 56px; height: 56px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .wishlist-btn svg { transition: transform var(--motion-duration-quick) var(--motion-easing-spring); }
-  .wishlist-btn path.outline { transition: stroke var(--motion-duration-fast) var(--motion-easing-standard); }
+  .wishlist-btn path.outline { transition: stroke var(--motion-duration-fast) var(--motion-easing-standard), opacity var(--motion-duration-base) var(--motion-easing-standard); }
   .heart-wrap.loading path.outline { opacity: 0; }
 
-  .trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity var(--motion-duration-base) var(--motion-easing-standard); }
   .heart-wrap.loading .trace-path { opacity: 1; animation: heart-trace 1.6s infinite; }
   @keyframes heart-trace {
     0% { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
     50% { stroke-dashoffset: 0; animation-timing-function: var(--motion-easing-accelerate); }
-    100% { stroke-dashoffset: calc(-1 * var(--len)); }
+    100% { stroke-dashoffset: var(--neg-len); }
+  }
+
+  /* ---------- Checkbox component ---------- */
+  .compare-demo.is-list { height: auto; align-items: flex-start; justify-content: center; padding: 16px 0; }
+  .checkbox-list { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; }
+  .checkbox-row .checkbox-label {
+    font-family: 'Proxima Nova', -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px; line-height: 20px; color: var(--ink); cursor: pointer; user-select: none;
+  }
+
+  .checkbox-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .checkbox-wrap.loading .checkbox-btn { pointer-events: none; }
+  .checkbox-btn { position: relative; width: 44px; height: 44px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .checkbox-btn.is-compact { width: 20px; height: 20px; }
+  .checkbox-btn svg { transition: transform var(--motion-duration-quick) var(--motion-easing-spring); }
+  .checkbox-btn path.outline { transition: stroke var(--motion-duration-fast) var(--motion-easing-standard), opacity var(--motion-duration-base) var(--motion-easing-standard); }
+  .checkbox-wrap.loading path.outline { opacity: 0; }
+
+  .checkbox-wrap .trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity var(--motion-duration-base) var(--motion-easing-standard); }
+  .checkbox-wrap.loading .trace-path { opacity: 1; animation: checkbox-trace 0.8s infinite; }
+  @keyframes checkbox-trace {
+    0% { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
+    50% { stroke-dashoffset: 0; animation-timing-function: var(--motion-easing-accelerate); }
+    100% { stroke-dashoffset: var(--neg-len); }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px 56px; }
+    .intro { padding: 40px 0 28px; }
+    .intro h1 { font-size: 24px; }
+    .intro p { font-size: 13.5px; }
+
+    .interaction { padding: 32px 0; }
+    .interaction-head { flex-direction: column; align-items: flex-start; gap: 6px; margin-bottom: 16px; }
+    .interaction h2 { font-size: 16px; }
+
+    .compare { grid-template-columns: 1fr; border-radius: 12px; }
+    .compare-col { padding: 24px 18px 22px; }
+    .compare-col + .compare-col { border-left: none; border-top: 1px solid var(--border); }
+
+    .code-toggle summary { padding: 12px 14px; font-size: 12.5px; }
+    .tab-buttons { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tab-btn { white-space: nowrap; padding: 10px 14px; }
+    .tab-panel { font-size: 10.5px; padding: 12px 14px; max-height: 300px; }
+
+    .slow-toggle { font-size: 12px; padding: 6px 12px 6px 8px; }
+    .token { font-size: 10px; }
   }
 </style>
 </head>
@@ -119,14 +189,17 @@
 
     <!-- ============ Interaction: Wishlist heart ============ -->
     <section class="interaction">
-      <h2>Додавання в обране</h2>
+      <div class="interaction-head">
+        <h2>Додавання в обране</h2>
+        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=7611-7756&t=jqaWVWEAcUC4T2p0-1" target="_blank" rel="noopener">View in Figma →</a>
+      </div>
 
       <div class="compare">
         <div class="compare-col is-bad">
           <span class="compare-tag bad">Зараз</span>
           <div class="compare-demo">
             <button id="heartBefore" class="wishlist-btn" aria-pressed="false" aria-label="Додати в обране, без анімації">
-              <svg width="36" height="36" viewBox="0 0 20 20" fill="none">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path id="heartBeforeOutline" class="outline" fill-rule="evenodd" clip-rule="evenodd" d="M16.7663 4.2377C15.9767 3.44523 14.9056 3 13.7887 3C12.6718 3 11.6007 3.44523 10.8112 4.2377L9.9998 5.05166L9.18843 4.2377C7.54398 2.58798 4.87779 2.58798 3.23334 4.2377C1.58889 5.88742 1.58889 8.56215 3.23334 10.2119L4.0447 11.0258L9.9998 17L15.9549 11.0258L16.7663 10.2119C17.5562 9.41978 18 8.34524 18 7.22479C18 6.10433 17.5562 5.0298 16.7663 4.2377Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transition: none;"/>
                 <path id="heartBeforeFill" fill-rule="evenodd" clip-rule="evenodd" d="M16.7663 4.2377C15.9767 3.44523 14.9056 3 13.7887 3C12.6718 3 11.6007 3.44523 10.8112 4.2377L9.9998 5.05166L9.18843 4.2377C7.54398 2.58798 4.87779 2.58798 3.23334 4.2377C1.58889 5.88742 1.58889 8.56215 3.23334 10.2119L4.0447 11.0258L9.9998 17L15.9549 11.0258L16.7663 10.2119C17.5562 9.41978 18 8.34524 18 7.22479C18 6.10433 17.5562 5.0298 16.7663 4.2377Z" fill="#212121" style="display:none;"/>
               </svg>
@@ -140,7 +213,7 @@
           <div class="compare-demo">
             <div class="heart-wrap" id="heartWrap">
               <button id="heartBtn" class="wishlist-btn" aria-pressed="false" aria-label="Додати в обране">
-                <svg id="heartSvg" width="40" height="40" viewBox="0 0 20 20" fill="none">
+                <svg id="heartSvg" width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <path id="heartOutline" class="outline" fill-rule="evenodd" clip-rule="evenodd" d="M16.7663 4.2377C15.9767 3.44523 14.9056 3 13.7887 3C12.6718 3 11.6007 3.44523 10.8112 4.2377L9.9998 5.05166L9.18843 4.2377C7.54398 2.58798 4.87779 2.58798 3.23334 4.2377C1.58889 5.88742 1.58889 8.56215 3.23334 10.2119L4.0447 11.0258L9.9998 17L15.9549 11.0258L16.7663 10.2119C17.5562 9.41978 18 8.34524 18 7.22479C18 6.10433 17.5562 5.0298 16.7663 4.2377Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                   <clipPath id="heartClip"><circle id="heartClipCircle" cx="10" cy="10" r="0"/></clipPath>
                   <path fill-rule="evenodd" clip-rule="evenodd" d="M16.7663 4.2377C15.9767 3.44523 14.9056 3 13.7887 3C12.6718 3 11.6007 3.44523 10.8112 4.2377L9.9998 5.05166L9.18843 4.2377C7.54398 2.58798 4.87779 2.58798 3.23334 4.2377C1.58889 5.88742 1.58889 8.56215 3.23334 10.2119L4.0447 11.0258L9.9998 17L15.9549 11.0258L16.7663 10.2119C17.5562 9.41978 18 8.34524 18 7.22479C18 6.10433 17.5562 5.0298 16.7663 4.2377Z" fill="#212121" clip-path="url(#heartClip)"/>
@@ -156,12 +229,21 @@
           </div>
           <label class="slow-toggle">
             <input type="checkbox" id="slowNetToggle">
+            <span class="mini-checkbox">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                <path class="outline" fill-rule="evenodd" clip-rule="evenodd" d="M3.77734 2.75H16.2227C16.7899 2.75023 17.2498 3.21006 17.25 3.77734V16.2227C17.2498 16.7899 16.7899 17.2498 16.2227 17.25H3.77734C3.21006 17.2498 2.75023 16.7899 2.75 16.2227V3.77734C2.75023 3.21006 3.21006 2.75023 3.77734 2.75Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <clipPath id="miniClip-0"><circle class="clip-circle" cx="10" cy="10" r="0"/></clipPath>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M16.2227 2C17.2042 2.00023 17.9998 2.79585 18 3.77734V16.2227C17.9998 17.2042 17.2042 17.9998 16.2227 18H3.77734C2.79585 17.9998 2.00023 17.2042 2 16.2227V3.77734C2.00023 2.79585 2.79585 2.00023 3.77734 2H16.2227ZM14.0303 6.80273C13.7374 6.51 13.2626 6.51 12.9697 6.80273L8.83301 10.9385L7.03027 9.13574C6.73745 8.84323 6.26255 8.84323 5.96973 9.13574C5.67693 9.42854 5.67712 9.90337 5.96973 10.1963L8.30273 12.5303C8.44331 12.6708 8.63421 12.7499 8.83301 12.75C9.03177 12.75 9.22266 12.6707 9.36328 12.5303L14.0303 7.86328C14.323 7.57038 14.3231 7.09559 14.0303 6.80273Z" fill="#212121" clip-path="url(#miniClip-0)"/>
+              </svg>
+            </span>
             Повільний інтернет
           </label>
         </div>
       </div>
 
-      <div class="code-tabs">
+      <details class="code-toggle">
+        <summary>Показати код (Web / iOS / Android)</summary>
+        <div class="code-tabs">
         <div class="tab-buttons">
           <button class="tab-btn active" data-tab="web">Web</button>
           <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
@@ -170,7 +252,7 @@
 
         <pre class="tab-panel active" data-panel="web">&lt;div class="heart-wrap" id="heartWrap"&gt;
   &lt;button class="wishlist-btn" aria-label="Додати в обране"&gt;
-    &lt;svg width="40" height="40" viewBox="0 0 20 20" fill="none"&gt;
+    &lt;svg width="20" height="20" viewBox="0 0 20 20" fill="none"&gt;
       &lt;path class="outline" d="M16.7663 4.2377...Z"
         stroke="#BFBFBF" stroke-width="1.5"/&gt;
       &lt;clipPath id="heartClip"&gt;&lt;circle id="heartClipCircle" cx="10" cy="10" r="0"/&gt;&lt;/clipPath&gt;
@@ -198,6 +280,8 @@ outline.parentNode.insertBefore(trace, outline);
 
 const len = trace.getTotalLength();
 trace.style.setProperty('--len', len);
+trace.style.setProperty('--neg-len', -len);  // без calc() у кейфреймі — деякі браузери
+                                              // не інтерполюють calc(var()) плавно
 trace.style.strokeDasharray = len + ' ' + len;
 
 .outline { transition: opacity var(--motion-duration-fast); }
@@ -207,7 +291,7 @@ trace.style.strokeDasharray = len + ' ' + len;
 @keyframes heart-trace {
   0%   { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
   50%  { stroke-dashoffset: 0;          animation-timing-function: var(--motion-easing-accelerate); }
-  100% { stroke-dashoffset: calc(-1 * var(--len)); }
+  100% { stroke-dashoffset: var(--neg-len); }
 }
 
 btn.addEventListener('mouseenter', () =&gt; {
@@ -368,6 +452,463 @@ fun WishlistHeart(productId: String) {
     }
 }</pre>
       </div>
+      </details>
+    </section>
+
+    <!-- ============ Interaction: Checkbox selection ============ -->
+    <section class="interaction">
+      <div class="interaction-head">
+        <h2>Вибір варіанта (checkbox)</h2>
+        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=7273-16047&t=jqaWVWEAcUC4T2p0-1" target="_blank" rel="noopener">View in Figma →</a>
+      </div>
+
+      <div class="compare">
+        <div class="compare-col is-bad">
+          <span class="compare-tag bad">Зараз</span>
+          <div class="compare-demo is-list">
+            <div class="checkbox-list" id="checkboxBeforeList"></div>
+          </div>
+          <p>Ховер миттєво чорнить рамку. Клік → пауза без фідбека → раптовий стрибок у заповнений стан.</p>
+        </div>
+
+        <div class="compare-col is-good">
+          <span class="compare-tag good">Пропозиція</span>
+          <div class="compare-demo is-list">
+            <div class="checkbox-list" id="checkboxList"></div>
+          </div>
+          <p class="status-line" id="checkboxStatus"></p>
+          <p>Список із трьох пунктів. Клік → press-фідбек → контур промальовується → заповнення на підтвердженні.</p>
+          <div class="tokens">
+            <span class="token">motion/duration/quick</span>
+            <span class="token">motion/easing/spring</span>
+          </div>
+          <label class="slow-toggle">
+            <input type="checkbox" id="slowNetToggleCheckbox">
+            <span class="mini-checkbox">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                <path class="outline" fill-rule="evenodd" clip-rule="evenodd" d="M3.77734 2.75H16.2227C16.7899 2.75023 17.2498 3.21006 17.25 3.77734V16.2227C17.2498 16.7899 16.7899 17.2498 16.2227 17.25H3.77734C3.21006 17.2498 2.75023 16.7899 2.75 16.2227V3.77734C2.75023 3.21006 3.21006 2.75023 3.77734 2.75Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <clipPath id="miniClip-1"><circle class="clip-circle" cx="10" cy="10" r="0"/></clipPath>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M16.2227 2C17.2042 2.00023 17.9998 2.79585 18 3.77734V16.2227C17.9998 17.2042 17.2042 17.9998 16.2227 18H3.77734C2.79585 17.9998 2.00023 17.2042 2 16.2227V3.77734C2.00023 2.79585 2.79585 2.00023 3.77734 2H16.2227ZM14.0303 6.80273C13.7374 6.51 13.2626 6.51 12.9697 6.80273L8.83301 10.9385L7.03027 9.13574C6.73745 8.84323 6.26255 8.84323 5.96973 9.13574C5.67693 9.42854 5.67712 9.90337 5.96973 10.1963L8.30273 12.5303C8.44331 12.6708 8.63421 12.7499 8.83301 12.75C9.03177 12.75 9.22266 12.6707 9.36328 12.5303L14.0303 7.86328C14.323 7.57038 14.3231 7.09559 14.0303 6.80273Z" fill="#212121" clip-path="url(#miniClip-1)"/>
+              </svg>
+            </span>
+            Повільний інтернет
+          </label>
+        </div>
+      </div>
+
+      <details class="code-toggle">
+        <summary>Показати код (Web / iOS / Android)</summary>
+        <div class="code-tabs">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="web">Web</button>
+          <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+          <button class="tab-btn" data-tab="android">Android · Compose</button>
+        </div>
+
+        <pre class="tab-panel active" data-panel="web">&lt;div class="checkbox-row"&gt;
+  &lt;div class="checkbox-wrap"&gt;
+    &lt;button class="checkbox-btn" aria-label="Вибрати варіант"&gt;
+      &lt;svg class="checkbox-svg" width="20" height="20" viewBox="0 0 20 20" fill="none"&gt;
+        &lt;path class="outline" d="M3.77734 2.75...Z" stroke="#BFBFBF" stroke-width="1.5"/&gt;
+        &lt;clipPath id="checkboxClip-0"&gt;&lt;circle class="clip-circle" cx="10" cy="10" r="0"/&gt;&lt;/clipPath&gt;
+        &lt;path class="fill-path" fill-rule="evenodd" d="M16.2227 2...Z" fill="#212121" clip-path="url(#checkboxClip-0)"/&gt;
+      &lt;/svg&gt;
+    &lt;/button&gt;
+  &lt;/div&gt;
+  &lt;span class="checkbox-label"&gt;List item&lt;/span&gt;
+&lt;/div&gt;
+&lt;!-- clipPath id має бути унікальним для кожного рядка списку --&gt;
+
+/* trace-path будується так само, як для серця, але БЕЗ реверсу точок —
+   тож напрямок промальовки виходить протилежний */
+.outline { transition: opacity var(--motion-duration-fast); }
+.checkbox-wrap.loading .outline { opacity: 0; }
+.trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; }
+.checkbox-wrap.loading .trace-path {
+  opacity: 1;
+  animation: checkbox-trace 0.8s infinite;   /* швидше за серце (1.6с) — checkbox має відчуватись легшим */
+}
+@keyframes checkbox-trace {
+  0%   { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
+  50%  { stroke-dashoffset: 0;          animation-timing-function: var(--motion-easing-accelerate); }
+  100% { stroke-dashoffset: var(--neg-len); }
+}
+
+/* Обгортка для одного рядка — та сама функція викликається на кожен
+   пункт списку (map/forEach), а не дублюється копіпастом */
+function wireCheckboxRow(row) {
+  const wrap = row.querySelector('.checkbox-wrap');
+  const btn = row.querySelector('.checkbox-btn');
+  const svg = row.querySelector('.checkbox-svg');
+  const outline = row.querySelector('.outline');
+  const clipCircle = row.querySelector('.clip-circle');
+  let active = false;
+  let pending = false;
+
+  btn.addEventListener('mouseenter', () =&gt; {
+    if (active || pending || !supportsHover) return;
+    outline.setAttribute('stroke', '#212121');
+    svg.style.transform = 'scale(1.06)';
+  });
+  btn.addEventListener('mouseleave', () =&gt; {
+    if (active || pending || !supportsHover) return;
+    outline.setAttribute('stroke', '#BFBFBF');
+    svg.style.transform = 'scale(1)';
+  });
+
+  btn.addEventListener('click', () =&gt; {
+    if (pending) return;
+    if (active) { active = false; clipCircle.setAttribute('r', '0'); return; }  // зняти — миттєво
+
+    pending = true;
+    svg.style.transform = 'scale(0.95)';              // press-фідбек, &lt;100ms
+    wrap.classList.add('loading');                     // контур одразу починає промальовуватись
+
+    api.confirmSelection(itemId).then(() =&gt; {          // реальний виклик
+      pending = false;
+      active = true;
+      wrap.classList.remove('loading');
+      outline.setAttribute('stroke', '#212121');
+      clipCircle.setAttribute('r', '12');               // motion/duration/quick, spring
+      svg.style.transform = 'scale(1.06)';
+      setTimeout(() =&gt; (svg.style.transform = 'scale(1)'), 150);
+    }).catch(() =&gt; {
+      pending = false;
+      wrap.classList.remove('loading');
+      // shake / toast з помилкою — сценарій "Обробка помилок"
+    });
+  });
+}
+
+document.querySelectorAll('.checkbox-row').forEach(wireCheckboxRow);</pre>
+
+        <pre class="tab-panel" data-panel="ios">// Використовується як рядок у List(items) { item in SelectableCheckbox(...) }
+struct SelectableCheckbox: View {
+    @State private var isSelected = false
+    @State private var isLoading = false
+    @State private var scale: CGFloat = 1
+
+    let pressHaptic = UIImpactFeedbackGenerator(style: .light)
+
+    var body: some View {
+        ZStack {
+            if isLoading {
+                // кільце розміром під іконку замінює трейс контуру
+                Circle()
+                    .trim(from: 0, to: 0.25)
+                    .stroke(Color(hex: "BFBFBF"), lineWidth: 1.5)
+                    .frame(width: 20, height: 20)
+                    .rotationEffect(.degrees(isLoading ? 360 : 0))
+                    .animation(
+                        .linear(duration: 0.6).repeatForever(autoreverses: false),
+                        value: isLoading
+                    )
+            } else {
+                Image(systemName: isSelected ? "checkmark.square.fill" : "square")
+                    .font(.system(size: 22))
+                    .foregroundStyle(isSelected ? Color(hex: "212121") : Color(hex: "BFBFBF"))
+                    .scaleEffect(scale)
+            }
+        }
+        .onTapGesture { handleTap() }
+    }
+
+    func handleTap() {
+        if isSelected {
+            isSelected = false
+            return
+        }
+
+        pressHaptic.impactOccurred()
+        withAnimation(.easeOut(duration: 0.1)) { scale = 0.95 }
+        isLoading = true
+
+        Task {
+            do {
+                try await api.confirmSelection(itemId)   // реальний виклик
+                await MainActor.run {
+                    isLoading = false
+                    isSelected = true
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) { scale = 1.06 }
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6).delay(0.15)) { scale = 1 }
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    // shake / toast — сценарій "Обробка помилок"
+                }
+            }
+        }
+    }
+}</pre>
+
+        <pre class="tab-panel" data-panel="android">// Використовується як рядок у LazyColumn { items(list) { SelectableCheckbox(it.id) } }
+@Composable
+fun SelectableCheckbox(itemId: String) {
+    var isSelected by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    val scale = remember { Animatable(1f) }
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+
+    Box(contentAlignment = Alignment.Center) {
+        if (isLoading) {
+            // кільце розміром під іконку замінює трейс контуру
+            CircularProgressIndicator(
+                color = Color(0xFFBFBFBF),
+                strokeWidth = 1.5.dp,
+                modifier = Modifier.size(20.dp)
+            )
+        } else {
+            Icon(
+                imageVector = if (isSelected) Icons.Filled.CheckBox else Icons.Outlined.CheckBoxOutlineBlank,
+                contentDescription = "Вибрати варіант",
+                tint = if (isSelected) Color(0xFF212121) else Color(0xFFBFBFBF),
+                modifier = Modifier
+                    .size(22.dp)
+                    .scale(scale.value)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        if (isSelected) { isSelected = false; return@clickable }
+
+                        scope.launch {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            scale.animateTo(0.95f, tween(100))
+                            isLoading = true
+
+                            try {
+                                api.confirmSelection(itemId)  // реальний виклик
+                                isLoading = false
+                                isSelected = true
+                                scale.animateTo(1.06f, spring(Spring.DampingRatioMediumBouncy))
+                                scale.animateTo(1f, tween(150))
+                            } catch (e: Exception) {
+                                isLoading = false
+                                // shake / snackbar — сценарій "Обробка помилок"
+                            }
+                        }
+                    }
+            )
+        }
+    }
+}</pre>
+      </div>
+      </details>
+    </section>
+
+    <!-- ============ Interaction: Radio button selection ============ -->
+    <section class="interaction">
+      <div class="interaction-head">
+        <h2>Вибір одного варіанта (radio button)</h2>
+        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=7273-16062&t=jqaWVWEAcUC4T2p0-1" target="_blank" rel="noopener">View in Figma →</a>
+      </div>
+
+      <div class="compare">
+        <div class="compare-col is-bad">
+          <span class="compare-tag bad">Зараз</span>
+          <div class="compare-demo is-list">
+            <div class="checkbox-list" id="radioBeforeList"></div>
+          </div>
+          <p>Ховер миттєво чорнить рамку. Клік → пауза без фідбека → раптовий стрибок у заповнений стан.</p>
+        </div>
+
+        <div class="compare-col is-good">
+          <span class="compare-tag good">Пропозиція</span>
+          <div class="compare-demo is-list">
+            <div class="checkbox-list" id="radioList"></div>
+          </div>
+          <p class="status-line" id="radioStatus"></p>
+          <p>Список із трьох варіантів. Клік → press-фідбек → контур промальовується → заповнення на підтвердженні. Вибір одного знімає попередній.</p>
+          <div class="tokens">
+            <span class="token">motion/duration/quick</span>
+            <span class="token">motion/easing/spring</span>
+          </div>
+          <label class="slow-toggle">
+            <input type="checkbox" id="slowNetToggleRadio">
+            <span class="mini-checkbox">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                <path class="outline" fill-rule="evenodd" clip-rule="evenodd" d="M3.77734 2.75H16.2227C16.7899 2.75023 17.2498 3.21006 17.25 3.77734V16.2227C17.2498 16.7899 16.7899 17.2498 16.2227 17.25H3.77734C3.21006 17.2498 2.75023 16.7899 2.75 16.2227V3.77734C2.75023 3.21006 3.21006 2.75023 3.77734 2.75Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <clipPath id="miniClip-2"><circle class="clip-circle" cx="10" cy="10" r="0"/></clipPath>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M16.2227 2C17.2042 2.00023 17.9998 2.79585 18 3.77734V16.2227C17.9998 17.2042 17.2042 17.9998 16.2227 18H3.77734C2.79585 17.9998 2.00023 17.2042 2 16.2227V3.77734C2.00023 2.79585 2.79585 2.00023 3.77734 2H16.2227ZM14.0303 6.80273C13.7374 6.51 13.2626 6.51 12.9697 6.80273L8.83301 10.9385L7.03027 9.13574C6.73745 8.84323 6.26255 8.84323 5.96973 9.13574C5.67693 9.42854 5.67712 9.90337 5.96973 10.1963L8.30273 12.5303C8.44331 12.6708 8.63421 12.7499 8.83301 12.75C9.03177 12.75 9.22266 12.6707 9.36328 12.5303L14.0303 7.86328C14.323 7.57038 14.3231 7.09559 14.0303 6.80273Z" fill="#212121" clip-path="url(#miniClip-2)"/>
+              </svg>
+            </span>
+            Повільний інтернет
+          </label>
+        </div>
+      </div>
+
+      <details class="code-toggle">
+        <summary>Показати код (Web / iOS / Android)</summary>
+        <div class="code-tabs">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="web">Web</button>
+          <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+          <button class="tab-btn" data-tab="android">Android · Compose</button>
+        </div>
+
+        <pre class="tab-panel active" data-panel="web">&lt;div class="checkbox-row"&gt;
+  &lt;div class="checkbox-wrap"&gt;
+    &lt;button class="checkbox-btn is-compact" aria-label="Вибрати варіант"&gt;
+      &lt;svg width="20" height="20" viewBox="0 0 20 20" fill="none"&gt;
+        &lt;path class="outline" d="M10 2.74976...Z" stroke="#BFBFBF" stroke-width="1.5"/&gt;
+        &lt;clipPath id="radioClip-0"&gt;&lt;circle class="clip-circle" cx="10" cy="10" r="0"/&gt;&lt;/clipPath&gt;
+        &lt;path fill-rule="evenodd" d="M10.4121 2.01074...Z" fill="#212121" clip-path="url(#radioClip-0)"/&gt;
+      &lt;/svg&gt;
+    &lt;/button&gt;
+  &lt;/div&gt;
+  &lt;span class="checkbox-label"&gt;List item&lt;/span&gt;
+&lt;/div&gt;
+&lt;!-- та сама механіка заливки/трейсу, що й чекбокс — різниця лише в геометрії
+     path (коло замість квадрата) і в exclusivity нижче --&gt;
+
+function wireRadioRow(row, onSelect) {
+  const wrap = row.querySelector('.checkbox-wrap');
+  const btn = row.querySelector('.checkbox-btn');
+  const svg = row.querySelector('svg');
+  const outline = row.querySelector('.outline');
+  const clipCircle = row.querySelector('.clip-circle');
+  let active = false;
+  let pending = false;
+
+  btn.addEventListener('mouseenter', () =&gt; {
+    if (active || pending || !supportsHover) return;
+    outline.setAttribute('stroke', '#212121');
+    svg.style.transform = 'scale(1.06)';
+  });
+  btn.addEventListener('mouseleave', () =&gt; {
+    if (active || pending || !supportsHover) return;
+    outline.setAttribute('stroke', '#BFBFBF');
+    svg.style.transform = 'scale(1)';
+  });
+
+  btn.addEventListener('click', () =&gt; {
+    if (pending || active) return;      // radio: повторний клік по вже обраному нічого не робить
+
+    pending = true;
+    svg.style.transform = 'scale(0.95)';
+    wrap.classList.add('loading');
+
+    api.selectOption(itemId).then(() =&gt; {
+      pending = false;
+      active = true;
+      wrap.classList.remove('loading');
+      outline.setAttribute('stroke', '#212121');
+      clipCircle.setAttribute('r', '10');
+      svg.style.transform = 'scale(1.06)';
+      setTimeout(() =&gt; (svg.style.transform = 'scale(1)'), 150);
+      onSelect();                        // групова ексклюзивність — знімає інші
+    });
+  });
+
+  return {
+    deselect() {                         // викликає група, коли обрали інший варіант
+      if (!active) return;
+      active = false;
+      outline.setAttribute('stroke', '#BFBFBF');
+      clipCircle.style.transition = 'r .15s ease-in';
+      clipCircle.setAttribute('r', '0');
+    }
+  };
+}
+
+// Групова ексклюзивність: лише один controller.deselect() викликається за раз
+const controllers = rows.map((row) =&gt;
+  wireRadioRow(row, () =&gt; controllers.forEach((c) =&gt; c !== current &amp;&amp; c.deselect()))
+);</pre>
+
+        <pre class="tab-panel" data-panel="ios">// Використовується як рядок у List(items) { item in RadioRow(...) },
+// isSelected прив'язаний до spільного @State selectedID у батьківській View
+struct RadioRow: View {
+    let isSelected: Bool
+    let onSelect: () -&gt; Void
+    @State private var isLoading = false
+    @State private var scale: CGFloat = 1
+
+    let pressHaptic = UIImpactFeedbackGenerator(style: .light)
+
+    var body: some View {
+        ZStack {
+            if isLoading {
+                Circle()
+                    .trim(from: 0, to: 0.25)
+                    .stroke(Color(hex: "BFBFBF"), lineWidth: 1.5)
+                    .frame(width: 20, height: 20)
+                    .rotationEffect(.degrees(isLoading ? 360 : 0))
+                    .animation(.linear(duration: 0.6).repeatForever(autoreverses: false), value: isLoading)
+            } else {
+                Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
+                    .font(.system(size: 20))
+                    .foregroundStyle(isSelected ? Color(hex: "212121") : Color(hex: "BFBFBF"))
+                    .scaleEffect(scale)
+            }
+        }
+        .onTapGesture {
+            guard !isSelected else { return }   // radio: не реагує на вже обраний
+            pressHaptic.impactOccurred()
+            withAnimation(.easeOut(duration: 0.1)) { scale = 0.95 }
+            isLoading = true
+
+            Task {
+                try? await api.selectOption(itemId)     // реальний виклик
+                await MainActor.run {
+                    isLoading = false
+                    onSelect()                            // батьківська View знімає інші
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) { scale = 1.06 }
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6).delay(0.15)) { scale = 1 }
+                }
+            }
+        }
+    }
+}</pre>
+
+        <pre class="tab-panel" data-panel="android">// Використовується як рядок у LazyColumn { items(options) { RadioRow(it, selectedId, onSelect) } }
+@Composable
+fun RadioRow(itemId: String, isSelected: Boolean, onSelect: () -&gt; Unit) {
+    var isLoading by remember { mutableStateOf(false) }
+    val scale = remember { Animatable(1f) }
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+
+    Box(contentAlignment = Alignment.Center) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                color = Color(0xFFBFBFBF),
+                strokeWidth = 1.5.dp,
+                modifier = Modifier.size(20.dp)
+            )
+        } else {
+            Icon(
+                imageVector = if (isSelected) Icons.Filled.RadioButtonChecked else Icons.Filled.RadioButtonUnchecked,
+                contentDescription = "Вибрати варіант",
+                tint = if (isSelected) Color(0xFF212121) else Color(0xFFBFBFBF),
+                modifier = Modifier
+                    .size(20.dp)
+                    .scale(scale.value)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        enabled = !isSelected               // radio: не реагує на вже обраний
+                    ) {
+                        scope.launch {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            scale.animateTo(0.95f, tween(100))
+                            isLoading = true
+
+                            api.selectOption(itemId)          // реальний виклик
+                            isLoading = false
+                            onSelect()                          // батьківський composable знімає інші
+                            scale.animateTo(1.06f, spring(Spring.DampingRatioMediumBouncy))
+                            scale.animateTo(1f, tween(150))
+                        }
+                    }
+            )
+        }
+    }
+}</pre>
+      </div>
+      </details>
     </section>
 
     <div class="placeholder-card">Наступна взаємодія — та сама структура: Зараз / Пропозиція / Web / iOS / Android</div>
@@ -376,6 +917,19 @@ fun WishlistHeart(productId: String) {
 
 <script>
 (function () {
+  /* Стан завантаження ніколи не переривається посеред циклу: якщо відповідь
+     прийшла в процесі малювання/стирання контуру, чекаємо завершення поточного
+     проходу (animationiteration) і лише тоді показуємо результат. Так контур
+     завжди домальовується і "стирається" по колу цілісно, без обривів. */
+  function waitForCycle(el) {
+    return new Promise((resolve) => {
+      el.addEventListener('animationiteration', function handler() {
+        el.removeEventListener('animationiteration', handler);
+        resolve();
+      });
+    });
+  }
+
   document.querySelectorAll('.interaction').forEach((block) => {
     const buttons = block.querySelectorAll('.tab-btn');
     const panels = block.querySelectorAll('.tab-panel');
@@ -447,6 +1001,7 @@ fun WishlistHeart(productId: String) {
     outline.parentNode.insertBefore(trace, outline);
     const traceLen = trace.getTotalLength();
     trace.style.setProperty('--len', traceLen);
+    trace.style.setProperty('--neg-len', -traceLen);
     trace.style.strokeDasharray = traceLen + ' ' + traceLen;
     trace.style.strokeDashoffset = traceLen;
 
@@ -476,10 +1031,9 @@ fun WishlistHeart(productId: String) {
         const dot = document.createElement('span');
         dot.style.cssText = 'position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#212121;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
         wrap.appendChild(dot);
-        requestAnimationFrame(() => {
-          dot.style.transform = 'translate(calc(-50% + ' + (Math.cos(angle) * dist) + 'px), calc(-50% + ' + (Math.sin(angle) * dist) + 'px))';
-          dot.style.opacity = '0';
-        });
+        void dot.offsetWidth; // примусовий reflow — гарантує, що початковий стан закомічений до зміни
+        dot.style.transform = 'translate(calc(-50% + ' + (Math.cos(angle) * dist) + 'px), calc(-50% + ' + (Math.sin(angle) * dist) + 'px))';
+        dot.style.opacity = '0';
         setTimeout(() => dot.remove(), 550);
       }
     }
@@ -504,7 +1058,7 @@ fun WishlistHeart(productId: String) {
       wrap.classList.add('loading');
       status.textContent = 'Надсилаємо запит…';
 
-      fakeRequest().then(() => {
+      fakeRequest().then(() => waitForCycle(trace)).then(() => {
         pending = false;
         active = true;
         wrap.classList.remove('loading');
@@ -520,6 +1074,345 @@ fun WishlistHeart(productId: String) {
       });
     });
   })();
+
+  /* ---- "Зараз": no feedback, then abrupt snap, same timing as the heart's "before" ---- */
+  (function buildBeforeCheckboxList() {
+    const list = document.getElementById('checkboxBeforeList');
+    const outlineD = 'M3.77734 2.75H16.2227C16.7899 2.75023 17.2498 3.21006 17.25 3.77734V16.2227C17.2498 16.7899 16.7899 17.2498 16.2227 17.25H3.77734C3.21006 17.2498 2.75023 16.7899 2.75 16.2227V3.77734C2.75023 3.21006 3.21006 2.75023 3.77734 2.75Z';
+    const fillD = 'M16.2227 2C17.2042 2.00023 17.9998 2.79585 18 3.77734V16.2227C17.9998 17.2042 17.2042 17.9998 16.2227 18H3.77734C2.79585 17.9998 2.00023 17.2042 2 16.2227V3.77734C2.00023 2.79585 2.79585 2.00023 3.77734 2H16.2227ZM14.0303 6.80273C13.7374 6.51 13.2626 6.51 12.9697 6.80273L8.83301 10.9385L7.03027 9.13574C6.73745 8.84323 6.26255 8.84323 5.96973 9.13574C5.67693 9.42854 5.67712 9.90337 5.96973 10.1963L8.30273 12.5303C8.44331 12.6708 8.63421 12.7499 8.83301 12.75C9.03177 12.75 9.22266 12.6707 9.36328 12.5303L14.0303 7.86328C14.323 7.57038 14.3231 7.09559 14.0303 6.80273Z';
+
+    for (let i = 0; i < 3; i++) {
+      const row = document.createElement('div');
+      row.className = 'checkbox-row';
+      row.innerHTML =
+        '<button class="checkbox-btn is-compact" aria-pressed="false" aria-label="Вибрати варіант, без анімації">' +
+          '<svg width="20" height="20" viewBox="0 0 20 20" fill="none">' +
+            '<path class="before-outline" fill-rule="evenodd" clip-rule="evenodd" d="' + outlineD + '" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transition: none;"/>' +
+            '<path class="before-fill" fill-rule="evenodd" clip-rule="evenodd" d="' + fillD + '" fill="#76BF44" style="display:none;"/>' +
+          '</svg>' +
+        '</button>' +
+        '<span class="checkbox-label">List item</span>';
+      list.appendChild(row);
+
+      const btn = row.querySelector('.checkbox-btn');
+      const outline = row.querySelector('.before-outline');
+      const fill = row.querySelector('.before-fill');
+      const label = row.querySelector('.checkbox-label');
+      let active = false;
+      let pending = false;
+
+      btn.addEventListener('mouseenter', () => { if (!active) outline.setAttribute('stroke', '#212121'); });
+      btn.addEventListener('mouseleave', () => { if (!active) outline.setAttribute('stroke', '#BFBFBF'); });
+      label.addEventListener('click', () => btn.click());
+      btn.addEventListener('click', () => {
+        if (pending) return;
+        pending = true;
+        setTimeout(() => {
+          active = !active;
+          fill.style.display = active ? 'block' : 'none';
+          pending = false;
+        }, 800);
+      });
+    }
+  })();
+
+  /* ---- "Пропозиція": optimistic — mark instantly, only surface a loading cue if the
+     confirmation is taking unusually long, so the common fast case never feels like a wait ---- */
+  (function wireProposalCheckboxList() {
+    const list = document.getElementById('checkboxList');
+    const slowToggle = document.getElementById('slowNetToggleCheckbox');
+    const status = document.getElementById('checkboxStatus');
+    const supportsHover = window.matchMedia('(hover: hover)').matches;
+
+    const outlineD = 'M3.77734 2.75H16.2227C16.7899 2.75023 17.2498 3.21006 17.25 3.77734V16.2227C17.2498 16.7899 16.7899 17.2498 16.2227 17.25H3.77734C3.21006 17.2498 2.75023 16.7899 2.75 16.2227V3.77734C2.75023 3.21006 3.21006 2.75023 3.77734 2.75Z';
+    const fillD = 'M16.2227 2C17.2042 2.00023 17.9998 2.79585 18 3.77734V16.2227C17.9998 17.2042 17.2042 17.9998 16.2227 18H3.77734C2.79585 17.9998 2.00023 17.2042 2 16.2227V3.77734C2.00023 2.79585 2.79585 2.00023 3.77734 2H16.2227ZM14.0303 6.80273C13.7374 6.51 13.2626 6.51 12.9697 6.80273L8.83301 10.9385L7.03027 9.13574C6.73745 8.84323 6.26255 8.84323 5.96973 9.13574C5.67693 9.42854 5.67712 9.90337 5.96973 10.1963L8.30273 12.5303C8.44331 12.6708 8.63421 12.7499 8.83301 12.75C9.03177 12.75 9.22266 12.6707 9.36328 12.5303L14.0303 7.86328C14.323 7.57038 14.3231 7.09559 14.0303 6.80273Z';
+
+    function buildRow(index) {
+      const row = document.createElement('div');
+      row.className = 'checkbox-row';
+      row.innerHTML =
+        '<div class="checkbox-wrap is-compact">' +
+          '<button class="checkbox-btn is-compact" aria-pressed="false" aria-label="Вибрати варіант">' +
+            '<svg class="checkbox-svg" width="20" height="20" viewBox="0 0 20 20" fill="none">' +
+              '<path class="outline" fill-rule="evenodd" clip-rule="evenodd" d="' + outlineD + '" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+              '<clipPath id="checkboxClip-' + index + '"><circle class="clip-circle" cx="10" cy="10" r="0"/></clipPath>' +
+              '<path class="fill-path" fill-rule="evenodd" clip-rule="evenodd" d="' + fillD + '" fill="#212121" clip-path="url(#checkboxClip-' + index + ')" style="transition: fill var(--motion-duration-fast) var(--motion-easing-standard);"/>' +
+            '</svg>' +
+          '</button>' +
+        '</div>' +
+        '<span class="checkbox-label">List item</span>';
+      return row;
+    }
+
+    function wireRow(row) {
+      const wrap = row.querySelector('.checkbox-wrap');
+      const btn = row.querySelector('.checkbox-btn');
+      const svg = row.querySelector('.checkbox-svg');
+      const outline = row.querySelector('.outline');
+      const clipCircle = row.querySelector('.clip-circle');
+      const label = row.querySelector('.checkbox-label');
+      let active = false;
+      let pending = false;
+
+      /* На відміну від серця — тут напрямок навмисно протилежний: з нижньої
+         точки за годинниковою стрілкою в інший бік (без реверсу точок) */
+      const total = outline.getTotalLength();
+      const samples = 120;
+      const pts = [];
+      for (let i = 0; i < samples; i++) {
+        pts.push(outline.getPointAtLength((total * i) / samples));
+      }
+      let tipIndex = 0;
+      for (let i = 1; i < pts.length; i++) {
+        if (pts[i].y > pts[tipIndex].y) tipIndex = i;
+      }
+      const fromTip = pts.slice(tipIndex).concat(pts.slice(0, tipIndex));
+
+      const trace = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      trace.setAttribute('class', 'trace-path');
+      trace.setAttribute('d', 'M ' + fromTip.map((p) => p.x + ' ' + p.y).join(' L ') + ' Z');
+      outline.parentNode.insertBefore(trace, outline);
+      const traceLen = trace.getTotalLength();
+      trace.style.setProperty('--len', traceLen);
+      trace.style.setProperty('--neg-len', -traceLen);
+      trace.style.strokeDasharray = traceLen + ' ' + traceLen;
+      trace.style.strokeDashoffset = traceLen;
+
+      function setHover(on) {
+        if (active || pending || !supportsHover) return;
+        outline.setAttribute('stroke', on ? '#212121' : '#BFBFBF');
+        svg.style.transform = on ? 'scale(1.06)' : 'scale(1)';
+      }
+      btn.addEventListener('mouseenter', () => setHover(true));
+      btn.addEventListener('mouseleave', () => setHover(false));
+      label.addEventListener('click', () => btn.click());
+
+      function fakeRequest() {
+        const slow = slowToggle.checked;
+        const delay = slow ? 2200 + Math.random() * 1200 : 250 + Math.random() * 250;
+        return new Promise((resolve) => setTimeout(resolve, delay));
+      }
+
+      btn.addEventListener('click', () => {
+        if (pending) return;
+
+        if (active) {
+          active = false;
+          btn.setAttribute('aria-pressed', 'false');
+          outline.setAttribute('stroke', '#BFBFBF');
+          clipCircle.style.transition = 'r .15s ease-in';
+          clipCircle.setAttribute('r', '0');
+          return;
+        }
+
+        pending = true;
+        svg.style.transform = 'scale(0.95)';
+        wrap.classList.add('loading');
+        status.textContent = 'Підтверджуємо…';
+
+        fakeRequest().then(() => waitForCycle(trace)).then(() => {
+          pending = false;
+          active = true;
+          wrap.classList.remove('loading');
+          btn.setAttribute('aria-pressed', 'true');
+          outline.setAttribute('stroke', '#212121');
+          clipCircle.style.transition = 'r .15s cubic-bezier(.34,1.56,.64,1)';
+          clipCircle.setAttribute('r', '12');
+          svg.style.transform = 'scale(1.06)';
+          setTimeout(() => (svg.style.transform = 'scale(1)'), 150);
+          status.textContent = '';
+        });
+      });
+    }
+
+    for (let i = 0; i < 3; i++) {
+      const row = buildRow(i);
+      list.appendChild(row);
+      wireRow(row);
+    }
+  })();
+
+  /* ---- Radio button: "Зараз" — same bad pattern as checkbox, but only one
+     option can be filled at a time (deselecting the previous is instant) ---- */
+  (function buildBeforeRadioList() {
+    const list = document.getElementById('radioBeforeList');
+    const outlineD = 'M10 2.74976C14.0041 2.74977 17.25 5.99571 17.25 9.99976C17.25 14.0038 14.0041 17.2497 10 17.2498C5.996 17.2498 2.75006 14.0038 2.75005 9.99976C2.75005 5.9957 5.99599 2.74976 10 2.74976Z';
+    const fillD = 'M10.4121 2.01074C14.6388 2.22524 18 5.71996 18 10L17.9893 10.4121C17.7748 14.6388 14.28 18 10 18L9.58789 17.9893C5.49768 17.7817 2.21831 14.5023 2.01074 10.4121L2 10C2 5.58175 5.58176 2.00003 10 2L10.4121 2.01074ZM10 3.5C6.41019 3.50003 3.5 6.41018 3.5 10C3.50001 13.5898 6.41019 16.5 10 16.5C13.5898 16.5 16.5 13.5898 16.5 10C16.5 6.41017 13.5898 3.50001 10 3.5ZM10 6C12.2091 6 14 7.79086 14 10C14 12.2091 12.2091 14 10 14C7.79086 14 6 12.2091 6 10C6 7.79086 7.79086 6 10 6Z';
+    const controllers = [];
+
+    for (let i = 0; i < 3; i++) {
+      const row = document.createElement('div');
+      row.className = 'checkbox-row';
+      row.innerHTML =
+        '<button class="checkbox-btn is-compact" aria-pressed="false" aria-label="Вибрати варіант, без анімації">' +
+          '<svg width="20" height="20" viewBox="0 0 20 20" fill="none">' +
+            '<path class="before-outline" fill-rule="evenodd" clip-rule="evenodd" d="' + outlineD + '" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transition: none;"/>' +
+            '<path class="before-fill" fill-rule="evenodd" clip-rule="evenodd" d="' + fillD + '" fill="#76BF44" style="display:none;"/>' +
+          '</svg>' +
+        '</button>' +
+        '<span class="checkbox-label">List item</span>';
+      list.appendChild(row);
+
+      const btn = row.querySelector('.checkbox-btn');
+      const outline = row.querySelector('.before-outline');
+      const fill = row.querySelector('.before-fill');
+      const label = row.querySelector('.checkbox-label');
+      let active = false;
+      let pending = false;
+
+      btn.addEventListener('mouseenter', () => { if (!active) outline.setAttribute('stroke', '#212121'); });
+      btn.addEventListener('mouseleave', () => { if (!active) outline.setAttribute('stroke', '#BFBFBF'); });
+      label.addEventListener('click', () => btn.click());
+      btn.addEventListener('click', () => {
+        if (pending || active) return;
+        pending = true;
+        setTimeout(() => {
+          pending = false;
+          active = true;
+          fill.style.display = 'block';
+          controllers.forEach((c) => c !== deselect && c());
+        }, 800);
+      });
+
+      const deselect = () => {
+        active = false;
+        fill.style.display = 'none';
+      };
+      controllers.push(deselect);
+    }
+  })();
+
+  /* ---- Radio button: "Пропозиція" — same trace-then-fill pattern as checkbox,
+     plus group exclusivity: selecting one instantly clears the others ---- */
+  (function wireProposalRadioList() {
+    const list = document.getElementById('radioList');
+    const slowToggle = document.getElementById('slowNetToggleRadio');
+    const status = document.getElementById('radioStatus');
+    const supportsHover = window.matchMedia('(hover: hover)').matches;
+
+    const outlineD = 'M10 2.74976C14.0041 2.74977 17.25 5.99571 17.25 9.99976C17.25 14.0038 14.0041 17.2497 10 17.2498C5.996 17.2498 2.75006 14.0038 2.75005 9.99976C2.75005 5.9957 5.99599 2.74976 10 2.74976Z';
+    const fillD = 'M10.4121 2.01074C14.6388 2.22524 18 5.71996 18 10L17.9893 10.4121C17.7748 14.6388 14.28 18 10 18L9.58789 17.9893C5.49768 17.7817 2.21831 14.5023 2.01074 10.4121L2 10C2 5.58175 5.58176 2.00003 10 2L10.4121 2.01074ZM10 3.5C6.41019 3.50003 3.5 6.41018 3.5 10C3.50001 13.5898 6.41019 16.5 10 16.5C13.5898 16.5 16.5 13.5898 16.5 10C16.5 6.41017 13.5898 3.50001 10 3.5ZM10 6C12.2091 6 14 7.79086 14 10C14 12.2091 12.2091 14 10 14C7.79086 14 6 12.2091 6 10C6 7.79086 7.79086 6 10 6Z';
+
+    function buildRow(index) {
+      const row = document.createElement('div');
+      row.className = 'checkbox-row';
+      row.innerHTML =
+        '<div class="checkbox-wrap is-compact">' +
+          '<button class="checkbox-btn is-compact" aria-pressed="false" aria-label="Вибрати варіант">' +
+            '<svg class="checkbox-svg" width="20" height="20" viewBox="0 0 20 20" fill="none">' +
+              '<path class="outline" fill-rule="evenodd" clip-rule="evenodd" d="' + outlineD + '" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+              '<clipPath id="radioClip-' + index + '"><circle class="clip-circle" cx="10" cy="10" r="0"/></clipPath>' +
+              '<path fill-rule="evenodd" clip-rule="evenodd" d="' + fillD + '" fill="#212121" clip-path="url(#radioClip-' + index + ')"/>' +
+            '</svg>' +
+          '</button>' +
+        '</div>' +
+        '<span class="checkbox-label">List item</span>';
+      return row;
+    }
+
+    function wireRow(row) {
+      const wrap = row.querySelector('.checkbox-wrap');
+      const btn = row.querySelector('.checkbox-btn');
+      const svg = row.querySelector('.checkbox-svg');
+      const outline = row.querySelector('.outline');
+      const clipCircle = row.querySelector('.clip-circle');
+      const label = row.querySelector('.checkbox-label');
+      let active = false;
+      let pending = false;
+
+      /* Той самий напрямок трейсу, що й для чекбокса (без реверсу точок) */
+      const total = outline.getTotalLength();
+      const samples = 100;
+      const pts = [];
+      for (let i = 0; i < samples; i++) {
+        pts.push(outline.getPointAtLength((total * i) / samples));
+      }
+      let tipIndex = 0;
+      for (let i = 1; i < pts.length; i++) {
+        if (pts[i].y > pts[tipIndex].y) tipIndex = i;
+      }
+      const fromTip = pts.slice(tipIndex).concat(pts.slice(0, tipIndex));
+
+      const trace = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      trace.setAttribute('class', 'trace-path');
+      trace.setAttribute('d', 'M ' + fromTip.map((p) => p.x + ' ' + p.y).join(' L ') + ' Z');
+      outline.parentNode.insertBefore(trace, outline);
+      const traceLen = trace.getTotalLength();
+      trace.style.setProperty('--len', traceLen);
+      trace.style.setProperty('--neg-len', -traceLen);
+      trace.style.strokeDasharray = traceLen + ' ' + traceLen;
+      trace.style.strokeDashoffset = traceLen;
+
+      btn.addEventListener('mouseenter', () => {
+        if (active || pending || !supportsHover) return;
+        outline.setAttribute('stroke', '#212121');
+        svg.style.transform = 'scale(1.06)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        if (active || pending || !supportsHover) return;
+        outline.setAttribute('stroke', '#BFBFBF');
+        svg.style.transform = 'scale(1)';
+      });
+      label.addEventListener('click', () => btn.click());
+
+      function fakeRequest() {
+        const slow = slowToggle.checked;
+        const delay = slow ? 2200 + Math.random() * 1200 : 250 + Math.random() * 250;
+        return new Promise((resolve) => setTimeout(resolve, delay));
+      }
+
+      const controller = {
+        deselect() {
+          if (!active) return;
+          active = false;
+          outline.setAttribute('stroke', '#BFBFBF');
+          clipCircle.style.transition = 'r .15s ease-in';
+          clipCircle.setAttribute('r', '0');
+        }
+      };
+
+      btn.addEventListener('click', () => {
+        if (pending || active) return; // radio: клік по вже обраному нічого не робить
+
+        pending = true;
+        svg.style.transform = 'scale(0.95)';
+        wrap.classList.add('loading');
+        status.textContent = 'Підтверджуємо…';
+
+        fakeRequest().then(() => waitForCycle(trace)).then(() => {
+          pending = false;
+          active = true;
+          wrap.classList.remove('loading');
+          btn.setAttribute('aria-pressed', 'true');
+          outline.setAttribute('stroke', '#212121');
+          clipCircle.style.transition = 'r .15s cubic-bezier(.34,1.56,.64,1)';
+          clipCircle.setAttribute('r', '10');
+          svg.style.transform = 'scale(1.06)';
+          setTimeout(() => (svg.style.transform = 'scale(1)'), 150);
+          status.textContent = '';
+          controllers.forEach((c) => c !== controller && c.deselect());
+        });
+      });
+
+      return controller;
+    }
+
+    const controllers = [];
+    for (let i = 0; i < 3; i++) {
+      const row = buildRow(i);
+      list.appendChild(row);
+      controllers.push(wireRow(row));
+    }
+  })();
+
+  /* ---- "Повільний інтернет" toggles: same fill-in animation as the
+     proposal checkbox, just local — no request, no loading state ---- */
+  document.querySelectorAll('.slow-toggle input').forEach((input) => {
+    const clipCircle = input.parentElement.querySelector('.clip-circle');
+    input.addEventListener('change', () => {
+      clipCircle.setAttribute('r', input.checked ? '12' : '0');
+    });
+  });
 })();
 </script>
 </body>
