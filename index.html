@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVA.UA — Motion showcase</title>
+<style>
+  :root {
+    --motion-duration-instant: 50ms;
+    --motion-duration-fast: 100ms;
+    --motion-duration-quick: 150ms;
+    --motion-duration-base: 200ms;
+    --motion-duration-expand: 250ms;
+    --motion-duration-moderate: 300ms;
+    --motion-duration-screen: 450ms;
+
+    --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+    --motion-easing-decelerate: cubic-bezier(0, 0, 0, 1);
+    --motion-easing-accelerate: cubic-bezier(0.3, 0, 1, 1);
+    --motion-easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --ink: #1A1A18;
+    --paper: #FBFAF7;
+    --card: #ffffff;
+    --border: #E7E5DF;
+    --accent: #D4537E;
+    --bad-bg: #FBEAEA; --bad-text: #C7422E; --bad-line: #E3A79C;
+    --good-bg: #E9F5EC; --good-text: #1E7A3D; --good-line: #9BCBA9;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ---------- Intro ---------- */
+  .intro {
+    padding: 72px 0 40px;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: rise 600ms var(--motion-easing-decelerate) forwards;
+  }
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+  .intro .kicker { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin: 0 0 14px; }
+  .intro h1 { font-size: 34px; line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 12px; max-width: 620px; }
+  .intro p { font-size: 15px; color: #6b6b66; max-width: 540px; line-height: 1.6; margin: 0; }
+
+  /* ---------- Interaction block (repeat this whole section per scenario) ---------- */
+  .interaction { padding: 44px 0; border-top: 1px solid var(--border); }
+  .interaction h2 { font-size: 18px; font-weight: 600; margin: 0 0 20px; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--card); }
+  .compare-col { padding: 32px 24px 28px; text-align: center; position: relative; border-top: 3px solid transparent; }
+  .compare-col.is-bad { border-top-color: var(--bad-line); }
+  .compare-col.is-good { border-top-color: var(--good-line); }
+  .compare-col + .compare-col { border-left: 1px solid var(--border); }
+  .compare-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; margin-bottom: 24px; }
+  .compare-tag.bad { background: var(--bad-bg); color: var(--bad-text); }
+  .compare-tag.good { background: var(--good-bg); color: var(--good-text); }
+  .compare-demo { height: 96px; display: flex; align-items: center; justify-content: center; }
+  .compare-col p { font-size: 12.5px; color: #8a8a84; margin: 12px 0 0; line-height: 1.5; }
+  .status-line { text-align: center; font-size: 12px; color: #a3a39c; margin-top: 4px; height: 16px; }
+
+  .tokens { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 14px; }
+  .token { font-family: "SF Mono", Menlo, monospace; font-size: 11px; background: var(--paper); border: 1px solid var(--border); border-radius: 4px; padding: 3px 7px; }
+
+  .slow-toggle {
+    display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink);
+    background: var(--paper); border: 1px solid var(--border); border-radius: 100px; padding: 7px 14px 7px 10px;
+    cursor: pointer; white-space: nowrap; user-select: none; margin-top: 16px;
+  }
+  .slow-toggle input { accent-color: var(--accent); }
+
+  .code-tabs { margin-top: 20px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .tab-buttons { display: flex; background: var(--paper); border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    font-size: 12.5px; font-weight: 500; color: #8a8a84; background: transparent; border: none;
+    padding: 10px 18px; cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+  .tab-btn.active { color: var(--ink); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; margin: 0; padding: 16px 18px; background: #171614; color: #E7E5DF; font-family: "SF Mono", Menlo, monospace; font-size: 11px; line-height: 1.6; overflow-x: auto; max-height: 380px; }
+  .tab-panel.active { display: block; }
+
+  .placeholder-card { border: 1px dashed var(--border); border-radius: 14px; padding: 32px 24px; text-align: center; color: #a3a39c; font-size: 13px; margin-top: 24px; }
+
+  /* ---------- Heart component ---------- */
+  .heart-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .heart-wrap.loading .wishlist-btn { pointer-events: none; }
+
+  .wishlist-btn { position: relative; width: 56px; height: 56px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .wishlist-btn svg { transition: transform var(--motion-duration-quick) var(--motion-easing-spring); }
+  .wishlist-btn path.outline { transition: stroke var(--motion-duration-fast) var(--motion-easing-standard); }
+  .heart-wrap.loading path.outline { opacity: 0; }
+
+  .trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .heart-wrap.loading .trace-path { opacity: 1; animation: heart-trace 1.6s infinite; }
+  @keyframes heart-trace {
+    0% { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
+    50% { stroke-dashoffset: 0; animation-timing-function: var(--motion-easing-accelerate); }
+    100% { stroke-dashoffset: calc(-1 * var(--len)); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="wrap">
+    <section class="intro">
+      <p class="kicker">EVA.UA · Foundation Library / Motion</p>
+      <h1>Та сама дія. Зовсім інше відчуття.</h1>
+      <p>Жодних нових функцій — лише те, як інтерфейс реагує на дію користувача. Кожна секція нижче: як зараз, пропозиція (клікабельна), код для web / iOS / Android.</p>
+    </section>
+
+    <!-- ============ Interaction: Wishlist heart ============ -->
+    <section class="interaction">
+      <h2>Додавання в обране</h2>
+
+      <div class="compare">
+        <div class="compare-col is-bad">
+          <span class="compare-tag bad">Зараз</span>
+          <div class="compare-demo">
+            <button id="heartBefore" class="wishlist-btn" aria-pressed="false" aria-label="Додати в обране, без анімації">
+              <svg width="36" height="36" viewBox="0 0 20 20" fill="none">
+                <path id="heartBeforeOutline" class="outline" fill-rule="evenodd" clip-rule="evenodd" d="M16.7663 4.2377C15.9767 3.44523 14.9056 3 13.7887 3C12.6718 3 11.6007 3.44523 10.8112 4.2377L9.9998 5.05166L9.18843 4.2377C7.54398 2.58798 4.87779 2.58798 3.23334 4.2377C1.58889 5.88742 1.58889 8.56215 3.23334 10.2119L4.0447 11.0258L9.9998 17L15.9549 11.0258L16.7663 10.2119C17.5562 9.41978 18 8.34524 18 7.22479C18 6.10433 17.5562 5.0298 16.7663 4.2377Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transition: none;"/>
+                <path id="heartBeforeFill" fill-rule="evenodd" clip-rule="evenodd" d="M16.7663 4.2377C15.9767 3.44523 14.9056 3 13.7887 3C12.6718 3 11.6007 3.44523 10.8112 4.2377L9.9998 5.05166L9.18843 4.2377C7.54398 2.58798 4.87779 2.58798 3.23334 4.2377C1.58889 5.88742 1.58889 8.56215 3.23334 10.2119L4.0447 11.0258L9.9998 17L15.9549 11.0258L16.7663 10.2119C17.5562 9.41978 18 8.34524 18 7.22479C18 6.10433 17.5562 5.0298 16.7663 4.2377Z" fill="#212121" style="display:none;"/>
+              </svg>
+            </button>
+          </div>
+          <p>Ховер миттєво чорнить контур. Клік → пауза без жодного фідбека → раптовий стрибок у суцільний чорний, без переходу.</p>
+        </div>
+
+        <div class="compare-col is-good">
+          <span class="compare-tag good">Пропозиція</span>
+          <div class="compare-demo">
+            <div class="heart-wrap" id="heartWrap">
+              <button id="heartBtn" class="wishlist-btn" aria-pressed="false" aria-label="Додати в обране">
+                <svg id="heartSvg" width="40" height="40" viewBox="0 0 20 20" fill="none">
+                  <path id="heartOutline" class="outline" fill-rule="evenodd" clip-rule="evenodd" d="M16.7663 4.2377C15.9767 3.44523 14.9056 3 13.7887 3C12.6718 3 11.6007 3.44523 10.8112 4.2377L9.9998 5.05166L9.18843 4.2377C7.54398 2.58798 4.87779 2.58798 3.23334 4.2377C1.58889 5.88742 1.58889 8.56215 3.23334 10.2119L4.0447 11.0258L9.9998 17L15.9549 11.0258L16.7663 10.2119C17.5562 9.41978 18 8.34524 18 7.22479C18 6.10433 17.5562 5.0298 16.7663 4.2377Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <clipPath id="heartClip"><circle id="heartClipCircle" cx="10" cy="10" r="0"/></clipPath>
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M16.7663 4.2377C15.9767 3.44523 14.9056 3 13.7887 3C12.6718 3 11.6007 3.44523 10.8112 4.2377L9.9998 5.05166L9.18843 4.2377C7.54398 2.58798 4.87779 2.58798 3.23334 4.2377C1.58889 5.88742 1.58889 8.56215 3.23334 10.2119L4.0447 11.0258L9.9998 17L15.9549 11.0258L16.7663 10.2119C17.5562 9.41978 18 8.34524 18 7.22479C18 6.10433 17.5562 5.0298 16.7663 4.2377Z" fill="#212121" clip-path="url(#heartClip)"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <p class="status-line" id="heartStatus"></p>
+          <p>Hover темнить контур, натискання дає press-фідбек, завантаження — контур домальовується по колу, success — заливка + burst.</p>
+          <div class="tokens">
+            <span class="token">motion/duration/fast</span>
+            <span class="token">motion/easing/spring</span>
+          </div>
+          <label class="slow-toggle">
+            <input type="checkbox" id="slowNetToggle">
+            Повільний інтернет
+          </label>
+        </div>
+      </div>
+
+      <div class="code-tabs">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="web">Web</button>
+          <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+          <button class="tab-btn" data-tab="android">Android · Compose</button>
+        </div>
+
+        <pre class="tab-panel active" data-panel="web">&lt;div class="heart-wrap" id="heartWrap"&gt;
+  &lt;button class="wishlist-btn" aria-label="Додати в обране"&gt;
+    &lt;svg width="40" height="40" viewBox="0 0 20 20" fill="none"&gt;
+      &lt;path class="outline" d="M16.7663 4.2377...Z"
+        stroke="#BFBFBF" stroke-width="1.5"/&gt;
+      &lt;clipPath id="heartClip"&gt;&lt;circle id="heartClipCircle" cx="10" cy="10" r="0"/&gt;&lt;/clipPath&gt;
+      &lt;path d="M16.7663 4.2377...Z" fill="#212121" clip-path="url(#heartClip)"/&gt;
+    &lt;/svg&gt;
+  &lt;/button&gt;
+&lt;/div&gt;
+
+/* Trace-path для завантаження: точки контуру серця, перевпорядковані
+   так, щоб малювання йшло з нижньої вершини за годинниковою стрілкою */
+const total = outline.getTotalLength();
+const pts = [];
+for (let i = 0; i &lt; 160; i++) pts.push(outline.getPointAtLength(total * i / 160));
+
+let tipIndex = 0;
+for (let i = 1; i &lt; pts.length; i++) if (pts[i].y &gt; pts[tipIndex].y) tipIndex = i;
+
+const fromTip = pts.slice(tipIndex).concat(pts.slice(0, tipIndex));
+const clockwise = [fromTip[0]].concat(fromTip.slice(1).reverse());
+
+const trace = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+trace.setAttribute('class', 'trace-path');
+trace.setAttribute('d', 'M ' + clockwise.map(p =&gt; p.x + ' ' + p.y).join(' L ') + ' Z');
+outline.parentNode.insertBefore(trace, outline);
+
+const len = trace.getTotalLength();
+trace.style.setProperty('--len', len);
+trace.style.strokeDasharray = len + ' ' + len;
+
+.outline { transition: opacity var(--motion-duration-fast); }
+.heart-wrap.loading .outline { opacity: 0; }
+.trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; }
+.heart-wrap.loading .trace-path { opacity: 1; animation: heart-trace 1.6s infinite; }
+@keyframes heart-trace {
+  0%   { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
+  50%  { stroke-dashoffset: 0;          animation-timing-function: var(--motion-easing-accelerate); }
+  100% { stroke-dashoffset: calc(-1 * var(--len)); }
+}
+
+btn.addEventListener('mouseenter', () =&gt; {
+  if (!active &amp;&amp; !pending &amp;&amp; supportsHover) {
+    outline.setAttribute('stroke', '#212121');
+    svg.style.transform = 'scale(1.08)';
+  }
+});
+btn.addEventListener('mouseleave', () =&gt; {
+  if (!active &amp;&amp; !pending &amp;&amp; supportsHover) {
+    outline.setAttribute('stroke', '#BFBFBF');
+    svg.style.transform = 'scale(1)';
+  }
+});
+
+btn.addEventListener('click', () =&gt; {
+  if (active) { /* зняти лайк — миттєво, без запиту */ return; }
+
+  svg.style.transform = 'scale(0.9)';        // press-фідбек, &lt;100ms
+  wrap.classList.add('loading');
+
+  api.addToWishlist(productId).then(() =&gt; {  // реальний виклик
+    wrap.classList.remove('loading');
+    outline.setAttribute('stroke', '#212121');
+    clipCircle.setAttribute('r', '14');       // motion/duration/quick, spring
+    svg.style.transform = 'scale(1.25)';
+    burst();                                    // 8 частинок, 500ms
+  }).catch(() =&gt; {
+    wrap.classList.remove('loading');
+    // shake / toast з помилкою — сценарій "Обробка помилок"
+  });
+});</pre>
+
+        <pre class="tab-panel" data-panel="ios">struct WishlistHeart: View {
+    @State private var isLiked = false
+    @State private var isLoading = false
+    @State private var scale: CGFloat = 1
+
+    let pressHaptic = UIImpactFeedbackGenerator(style: .medium)
+    let successHaptic = UINotificationFeedbackGenerator()
+
+    var body: some View {
+        ZStack {
+            if isLoading {
+                // кільце розміром під іконку замінює трейс контуру
+                Circle()
+                    .trim(from: 0, to: 0.25)
+                    .stroke(Color(hex: "BFBFBF"), lineWidth: 1.5)
+                    .frame(width: 24, height: 24)
+                    .rotationEffect(.degrees(isLoading ? 360 : 0))
+                    .animation(
+                        .linear(duration: 0.8).repeatForever(autoreverses: false),
+                        value: isLoading
+                    )
+            }
+            Image(systemName: isLiked ? "heart.fill" : "heart")
+                .font(.system(size: 24))
+                .foregroundStyle(isLiked ? Color(hex: "212121") : Color(hex: "BFBFBF"))
+                .scaleEffect(scale)
+        }
+        .frame(width: 56, height: 56)
+        .onTapGesture { handleTap() }
+    }
+
+    func handleTap() {
+        if isLiked {
+            isLiked = false
+            withAnimation(.easeIn(duration: 0.15)) { scale = 0.85 }
+            withAnimation(.easeOut(duration: 0.15).delay(0.15)) { scale = 1 }
+            return
+        }
+
+        pressHaptic.impactOccurred()
+        withAnimation(.easeOut(duration: 0.1)) { scale = 0.9 }
+        isLoading = true
+
+        Task {
+            do {
+                try await api.addToWishlist(productId)
+                await MainActor.run {
+                    isLoading = false
+                    isLiked = true
+                    successHaptic.notificationOccurred(.success)
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.55)) {
+                        scale = 1.25
+                    }
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.55).delay(0.22)) {
+                        scale = 1
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    // shake / toast — сценарій "Обробка помилок"
+                }
+            }
+        }
+    }
+}</pre>
+
+        <pre class="tab-panel" data-panel="android">@Composable
+fun WishlistHeart(productId: String) {
+    var isLiked by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    val scale = remember { Animatable(1f) }
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(56.dp)) {
+        if (isLoading) {
+            // кільце розміром під іконку замінює трейс контуру
+            CircularProgressIndicator(
+                color = Color(0xFFBFBFBF),
+                strokeWidth = 1.5.dp,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Icon(
+            imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+            contentDescription = "Додати в обране",
+            tint = if (isLiked) Color(0xFF212121) else Color(0xFFBFBFBF),
+            modifier = Modifier
+                .size(24.dp)
+                .scale(scale.value)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    scope.launch {
+                        if (isLiked) {
+                            isLiked = false
+                            scale.animateTo(0.85f, tween(150))
+                            scale.animateTo(1f, tween(150))
+                            return@launch
+                        }
+
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        scale.animateTo(0.9f, tween(100))
+                        isLoading = true
+
+                        try {
+                            api.addToWishlist(productId)
+                            isLoading = false
+                            isLiked = true
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            scale.animateTo(
+                                1.25f,
+                                spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium)
+                            )
+                            scale.animateTo(1f, tween(220))
+                        } catch (e: Exception) {
+                            isLoading = false
+                            // shake / snackbar — сценарій "Обробка помилок"
+                        }
+                    }
+                }
+        )
+    }
+}</pre>
+      </div>
+    </section>
+
+    <div class="placeholder-card">Наступна взаємодія — та сама структура: Зараз / Пропозиція / Web / iOS / Android</div>
+
+  </div>
+
+<script>
+(function () {
+  document.querySelectorAll('.interaction').forEach((block) => {
+    const buttons = block.querySelectorAll('.tab-btn');
+    const panels = block.querySelectorAll('.tab-panel');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        buttons.forEach((b) => b.classList.remove('active'));
+        panels.forEach((p) => p.classList.remove('active'));
+        btn.classList.add('active');
+        block.querySelector('.tab-panel[data-panel="' + btn.dataset.tab + '"]').classList.add('active');
+      });
+    });
+  });
+
+  const beforeBtn = document.getElementById('heartBefore');
+  const beforeOutline = document.getElementById('heartBeforeOutline');
+  const beforeFill = document.getElementById('heartBeforeFill');
+  let beforeActive = false;
+  let beforePending = false;
+
+  beforeBtn.addEventListener('mouseenter', () => {
+    if (!beforeActive) beforeOutline.setAttribute('stroke', '#212121');
+  });
+  beforeBtn.addEventListener('mouseleave', () => {
+    if (!beforeActive) beforeOutline.setAttribute('stroke', '#BFBFBF');
+  });
+
+  beforeBtn.addEventListener('click', () => {
+    if (beforePending) return;
+    beforePending = true;
+    // та сама тривалість, що й фаза промальовки в "Пропозиції" (половина 1.6с циклу),
+    // але без жодного індикатора чи проміжного стану — просто мовчазне очікування
+    setTimeout(() => {
+      beforeActive = !beforeActive;
+      beforeFill.style.display = beforeActive ? 'block' : 'none';
+      beforePending = false;
+    }, 800);
+  });
+
+  (function wireProposalHeart() {
+    const wrap = document.getElementById('heartWrap');
+    const btn = document.getElementById('heartBtn');
+    const svg = document.getElementById('heartSvg');
+    const outline = document.getElementById('heartOutline');
+    const clipCircle = document.getElementById('heartClipCircle');
+    const slowToggle = document.getElementById('slowNetToggle');
+    const status = document.getElementById('heartStatus');
+    const supportsHover = window.matchMedia('(hover: hover)').matches;
+    let active = false;
+    let pending = false;
+
+    /* Trace-path для завантаження: точки контуру серця, перевпорядковані
+       так, щоб малювання йшло з нижньої вершини за годинниковою стрілкою */
+    const total = outline.getTotalLength();
+    const samples = 160;
+    const pts = [];
+    for (let i = 0; i < samples; i++) {
+      pts.push(outline.getPointAtLength((total * i) / samples));
+    }
+    let tipIndex = 0;
+    for (let i = 1; i < pts.length; i++) {
+      if (pts[i].y > pts[tipIndex].y) tipIndex = i;
+    }
+    const fromTip = pts.slice(tipIndex).concat(pts.slice(0, tipIndex));
+    const clockwise = [fromTip[0]].concat(fromTip.slice(1).reverse());
+
+    const trace = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    trace.setAttribute('class', 'trace-path');
+    trace.setAttribute('d', 'M ' + clockwise.map((p) => p.x + ' ' + p.y).join(' L ') + ' Z');
+    outline.parentNode.insertBefore(trace, outline);
+    const traceLen = trace.getTotalLength();
+    trace.style.setProperty('--len', traceLen);
+    trace.style.strokeDasharray = traceLen + ' ' + traceLen;
+    trace.style.strokeDashoffset = traceLen;
+
+    btn.addEventListener('mouseenter', () => {
+      if (!active && !pending && supportsHover) {
+        outline.setAttribute('stroke', '#212121');
+        svg.style.transform = 'scale(1.08)';
+      }
+    });
+    btn.addEventListener('mouseleave', () => {
+      if (!active && !pending && supportsHover) {
+        outline.setAttribute('stroke', '#BFBFBF');
+        svg.style.transform = 'scale(1)';
+      }
+    });
+
+    function fakeRequest() {
+      const slow = slowToggle.checked;
+      const delay = slow ? 2400 + Math.random() * 1200 : 700 + Math.random() * 400;
+      return new Promise((resolve) => setTimeout(resolve, delay));
+    }
+
+    function burst() {
+      const n = 8, dist = 26;
+      for (let i = 0; i < n; i++) {
+        const angle = (i / n) * Math.PI * 2;
+        const dot = document.createElement('span');
+        dot.style.cssText = 'position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#212121;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
+        wrap.appendChild(dot);
+        requestAnimationFrame(() => {
+          dot.style.transform = 'translate(calc(-50% + ' + (Math.cos(angle) * dist) + 'px), calc(-50% + ' + (Math.sin(angle) * dist) + 'px))';
+          dot.style.opacity = '0';
+        });
+        setTimeout(() => dot.remove(), 550);
+      }
+    }
+
+    btn.addEventListener('click', () => {
+      if (pending) return;
+
+      if (active) {
+        active = false;
+        btn.setAttribute('aria-pressed', 'false');
+        outline.setAttribute('stroke', '#BFBFBF');
+        clipCircle.style.transition = 'r .3s ease-in';
+        clipCircle.setAttribute('r', '0');
+        svg.style.transform = 'scale(0.85)';
+        setTimeout(() => (svg.style.transform = 'scale(1)'), 150);
+        status.textContent = '';
+        return;
+      }
+
+      pending = true;
+      svg.style.transform = 'scale(0.9)';
+      wrap.classList.add('loading');
+      status.textContent = 'Надсилаємо запит…';
+
+      fakeRequest().then(() => {
+        pending = false;
+        active = true;
+        wrap.classList.remove('loading');
+        outline.setAttribute('stroke', '#212121');
+        btn.setAttribute('aria-pressed', 'true');
+        clipCircle.style.transition = 'r .45s cubic-bezier(.34,1.56,.64,1)';
+        clipCircle.setAttribute('r', '14');
+        svg.style.transform = 'scale(1.25)';
+        setTimeout(() => (svg.style.transform = 'scale(1)'), 220);
+        burst();
+        status.textContent = 'Додано в обране';
+        setTimeout(() => { if (status.textContent === 'Додано в обране') status.textContent = ''; }, 1500);
+      });
+    });
+  })();
+})();
+</script>
+</body>
+</html>
