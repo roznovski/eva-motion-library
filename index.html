@@ -154,6 +154,71 @@
     50% { stroke-dashoffset: 0; animation-timing-function: var(--motion-easing-accelerate); }
     100% { stroke-dashoffset: var(--neg-len); }
   }
+  /* ---------- Toggle component ---------- */
+  .toggle-btn {
+    position: relative; width: 48px; height: 24px; border: none; background: transparent;
+    padding: 0; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+  }
+  .toggle-btn.loading { pointer-events: none; }
+  .toggle-btn svg { display: block; transition: transform var(--motion-duration-quick) var(--motion-easing-spring); }
+  .knob-group {
+    transform: translateX(0); transform-box: fill-box; transform-origin: center;
+    transition: transform var(--motion-duration-quick) var(--motion-easing-spring), filter var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+  .toggle-btn.on .knob-group { transform: translateX(24px); }
+  .knob-fill {
+    transform-box: fill-box; transform-origin: center;
+    transition: fill var(--motion-duration-base) var(--motion-easing-standard), opacity var(--motion-duration-fast) var(--motion-easing-standard), transform var(--motion-duration-quick) var(--motion-easing-spring);
+  }
+  .toggle-btn.on .knob-fill { fill: #76BF44; }
+  .toggle-outline { transition: stroke var(--motion-duration-fast) var(--motion-easing-standard); }
+
+  .toggle-btn.loading .knob-fill {
+    animation: knob-breathe 1s infinite;
+  }
+  @keyframes knob-breathe {
+    0% { transform: scale(0.8); opacity: 1; animation-timing-function: var(--motion-easing-decelerate); }
+    50% { transform: scale(1.05); opacity: 0.5; animation-timing-function: var(--motion-easing-accelerate); }
+    100% { transform: scale(0.8); opacity: 1; }
+  }
+
+  /* Hover: track border darkens, knob lifts with a soft shadow + gentle scale.
+     Guarded against loading/touch via :hover itself not firing on tap devices. */
+  .toggle-btn:hover:not(.loading) .toggle-outline { stroke: #B0B0B0; }
+  .toggle-btn:hover:not(.loading) .knob-group { filter: drop-shadow(0 1px 2px rgba(26,26,24,0.22)); }
+  .toggle-btn:hover:not(.loading) .knob-fill { transform: scale(1.08); }
+  .toggle-btn.on:hover:not(.loading) .toggle-outline { stroke: #63A836; }
+
+  /* ---------- Slider component ---------- */
+  .slider { position: relative; width: 288px; height: 24px; max-width: 100%; touch-action: none; }
+  .slider-track { position: absolute; left: 0; right: 0; top: 8px; height: 8px; border-radius: 4px; background: #EBEBEB; }
+  .slider-fill { position: absolute; top: 8px; height: 8px; border-radius: 4px; background: #76BF44; }
+  .slider-thumb {
+    position: absolute; top: 1px; width: 22px; height: 22px; margin-left: -11px;
+    border-radius: 50%; background: #fff; border: 2px solid #D8D8D8; cursor: grab;
+    touch-action: none;
+  }
+  .slider-thumb:active { cursor: grabbing; }
+
+  /* "Зараз": без transition — рух лінійний, ніякого grab/hover фідбека */
+  .slider.is-linear .slider-thumb,
+  .slider.is-linear .slider-fill { transition: none; }
+
+  /* "Пропозиція": плавні переходи для програмних стрибків (клік по треку),
+     живий drag завжди 1:1 з курсором — transition вимикається на час активного тягання */
+  .slider-fill { transition: left var(--motion-duration-quick) var(--motion-easing-spring), width var(--motion-duration-quick) var(--motion-easing-spring); }
+  .slider-thumb {
+    transition: left var(--motion-duration-quick) var(--motion-easing-spring), transform var(--motion-duration-quick) var(--motion-easing-spring), box-shadow var(--motion-duration-fast) var(--motion-easing-standard), border-color var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+  .slider-thumb:hover { transform: scale(1.08); box-shadow: 0 1px 4px rgba(26,26,24,.18); }
+  .slider-thumb.grabbing {
+    transform: scale(1.2); border-color: #76BF44; box-shadow: 0 2px 8px rgba(26,26,24,.22);
+    transition: transform var(--motion-duration-quick) var(--motion-easing-spring), box-shadow var(--motion-duration-fast) var(--motion-easing-standard), border-color var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+  .slider.dragging .slider-thumb,
+  .slider.dragging .slider-fill { transition: none; }
+
   @media (max-width: 640px) {
     .wrap { padding: 0 16px 56px; }
     .intro { padding: 40px 0 28px; }
@@ -205,7 +270,6 @@
               </svg>
             </button>
           </div>
-          <p>Ховер миттєво чорнить контур. Клік → пауза без жодного фідбека → раптовий стрибок у суцільний чорний, без переходу.</p>
         </div>
 
         <div class="compare-col is-good">
@@ -222,7 +286,6 @@
             </div>
           </div>
           <p class="status-line" id="heartStatus"></p>
-          <p>Hover темнить контур, натискання дає press-фідбек, завантаження — контур домальовується по колу, success — заливка + burst.</p>
           <div class="tokens">
             <span class="token">motion/duration/fast</span>
             <span class="token">motion/easing/spring</span>
@@ -468,7 +531,6 @@ fun WishlistHeart(productId: String) {
           <div class="compare-demo is-list">
             <div class="checkbox-list" id="checkboxBeforeList"></div>
           </div>
-          <p>Ховер миттєво чорнить рамку. Клік → пауза без фідбека → раптовий стрибок у заповнений стан.</p>
         </div>
 
         <div class="compare-col is-good">
@@ -477,7 +539,6 @@ fun WishlistHeart(productId: String) {
             <div class="checkbox-list" id="checkboxList"></div>
           </div>
           <p class="status-line" id="checkboxStatus"></p>
-          <p>Список із трьох пунктів. Клік → press-фідбек → контур промальовується → заповнення на підтвердженні.</p>
           <div class="tokens">
             <span class="token">motion/duration/quick</span>
             <span class="token">motion/easing/spring</span>
@@ -711,7 +772,6 @@ fun SelectableCheckbox(itemId: String) {
           <div class="compare-demo is-list">
             <div class="checkbox-list" id="radioBeforeList"></div>
           </div>
-          <p>Ховер миттєво чорнить рамку. Клік → пауза без фідбека → раптовий стрибок у заповнений стан.</p>
         </div>
 
         <div class="compare-col is-good">
@@ -720,7 +780,6 @@ fun SelectableCheckbox(itemId: String) {
             <div class="checkbox-list" id="radioList"></div>
           </div>
           <p class="status-line" id="radioStatus"></p>
-          <p>Список із трьох варіантів. Клік → press-фідбек → контур промальовується → заповнення на підтвердженні. Вибір одного знімає попередній.</p>
           <div class="tokens">
             <span class="token">motion/duration/quick</span>
             <span class="token">motion/easing/spring</span>
@@ -901,6 +960,446 @@ fun RadioRow(itemId: String, isSelected: Boolean, onSelect: () -&gt; Unit) {
                             onSelect()                          // батьківський composable знімає інші
                             scale.animateTo(1.06f, spring(Spring.DampingRatioMediumBouncy))
                             scale.animateTo(1f, tween(150))
+                        }
+                    }
+            )
+        }
+    }
+}</pre>
+      </div>
+      </details>
+    </section>
+
+    <!-- ============ Interaction: Toggle ============ -->
+    <section class="interaction">
+      <div class="interaction-head">
+        <h2>Перемикач (toggle)</h2>
+        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=7273-16046&t=jqaWVWEAcUC4T2p0-1" target="_blank" rel="noopener">View in Figma →</a>
+      </div>
+
+      <div class="compare">
+        <div class="compare-col is-bad">
+          <span class="compare-tag bad">Зараз</span>
+          <div class="compare-demo">
+            <button id="toggleBefore" class="toggle-btn" aria-pressed="false" aria-label="Увімкнути, без анімації">
+              <svg width="48" height="24" viewBox="0 0 48 24" fill="none">
+                <rect width="48" height="24" rx="12" fill="#E5E5E5"/>
+                <rect id="toggleBeforeTrackFill" width="48" height="24" rx="12" fill="#D9F2BF" style="display:none;"/>
+                <circle id="toggleBeforeKnob" cx="12" cy="12" r="10" fill="#AFAFAF" style="transition:none;"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="compare-col is-good">
+          <span class="compare-tag good">Пропозиція</span>
+          <div class="compare-demo">
+            <button id="toggleBtn" class="toggle-btn" aria-pressed="false" aria-label="Увімкнути">
+              <svg id="toggleSvg" width="48" height="24" viewBox="0 0 48 24" fill="none">
+                <rect width="48" height="24" rx="12" fill="#E5E5E5"/>
+                <rect class="toggle-outline" x="0.75" y="0.75" width="46.5" height="22.5" rx="11.25" stroke="#E5E5E5" stroke-width="1.5"/>
+                <clipPath id="toggleClip"><circle id="toggleClipCircle" cx="36" cy="12" r="0"/></clipPath>
+                <rect width="48" height="24" rx="12" fill="#D9F2BF" clip-path="url(#toggleClip)"/>
+                <g class="knob-group" id="knobGroup">
+                  <circle class="knob-fill" id="knobFill" cx="12" cy="12" r="10" fill="#AFAFAF"/>
+                </g>
+              </svg>
+            </button>
+          </div>
+          <p class="status-line" id="toggleStatus"></p>
+          <div class="tokens">
+            <span class="token">motion/duration/quick</span>
+            <span class="token">motion/easing/spring</span>
+          </div>
+          <label class="slow-toggle">
+            <input type="checkbox" id="slowNetToggleToggle">
+            <span class="mini-checkbox">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                <path class="outline" fill-rule="evenodd" clip-rule="evenodd" d="M3.77734 2.75H16.2227C16.7899 2.75023 17.2498 3.21006 17.25 3.77734V16.2227C17.2498 16.7899 16.7899 17.2498 16.2227 17.25H3.77734C3.21006 17.2498 2.75023 16.7899 2.75 16.2227V3.77734C2.75023 3.21006 3.21006 2.75023 3.77734 2.75Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <clipPath id="miniClip-3"><circle class="clip-circle" cx="10" cy="10" r="0"/></clipPath>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M16.2227 2C17.2042 2.00023 17.9998 2.79585 18 3.77734V16.2227C17.9998 17.2042 17.2042 17.9998 16.2227 18H3.77734C2.79585 17.9998 2.00023 17.2042 2 16.2227V3.77734C2.00023 2.79585 2.79585 2.00023 3.77734 2H16.2227ZM14.0303 6.80273C13.7374 6.51 13.2626 6.51 12.9697 6.80273L8.83301 10.9385L7.03027 9.13574C6.73745 8.84323 6.26255 8.84323 5.96973 9.13574C5.67693 9.42854 5.67712 9.90337 5.96973 10.1963L8.30273 12.5303C8.44331 12.6708 8.63421 12.7499 8.83301 12.75C9.03177 12.75 9.22266 12.6707 9.36328 12.5303L14.0303 7.86328C14.323 7.57038 14.3231 7.09559 14.0303 6.80273Z" fill="#212121" clip-path="url(#miniClip-3)"/>
+              </svg>
+            </span>
+            Повільний інтернет
+          </label>
+        </div>
+      </div>
+
+      <details class="code-toggle">
+        <summary>Показати код (Web / iOS / Android)</summary>
+        <div class="code-tabs">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="web">Web</button>
+          <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+          <button class="tab-btn" data-tab="android">Android · Compose</button>
+        </div>
+
+        <pre class="tab-panel active" data-panel="web">&lt;button class="toggle-btn" aria-label="Увімкнути"&gt;
+  &lt;svg width="48" height="24" viewBox="0 0 48 24" fill="none"&gt;
+    &lt;rect width="48" height="24" rx="12" fill="#E5E5E5"/&gt;               &lt;!-- базовий трек --&gt;
+    &lt;rect class="toggle-outline" x="0.75" y="0.75" width="46.5" height="22.5" rx="11.25" stroke="#E5E5E5" stroke-width="1.5"/&gt;
+    &lt;clipPath id="toggleClip"&gt;&lt;circle id="toggleClipCircle" cx="36" cy="12" r="0"/&gt;&lt;/clipPath&gt;
+    &lt;rect width="48" height="24" rx="12" fill="#D9F2BF" clip-path="url(#toggleClip)"/&gt;
+    &lt;g class="knob-group"&gt;
+      &lt;circle class="knob-fill" cx="12" cy="12" r="10" fill="#AFAFAF"/&gt;
+    &lt;/g&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;
+
+.knob-group { transition: transform var(--motion-duration-quick) var(--motion-easing-spring); }
+.toggle-btn.on .knob-group { transform: translateX(24px); }   /* 36 − 12 = 24 */
+.knob-fill {
+  transform-box: fill-box; transform-origin: center;
+  transition: fill var(--motion-duration-base), transform var(--motion-duration-quick) var(--motion-easing-spring);
+}
+.toggle-btn.on .knob-fill { fill: #76BF44; }
+
+/* Loading: гурток спокійно "дихає" — opacity + scale, без спінера чи контуру.
+   На такому маленькому елементі (20px) обертова дуга виглядала метушливо;
+   дихання читається спокійніше й не конфліктує візуально з жодним іншим шаром. */
+.toggle-btn.loading .knob-fill { animation: knob-breathe 1s infinite; }
+@keyframes knob-breathe {
+  0%   { transform: scale(0.8); opacity: 1;   animation-timing-function: var(--motion-easing-decelerate); }
+  50%  { transform: scale(1.05); opacity: 0.5; animation-timing-function: var(--motion-easing-accelerate); }
+  100% { transform: scale(0.8); opacity: 1; }
+}
+
+/* Ховер: рамка темнішає, повзунок підіймається тінню + легкий scale.
+   Вимикається під час loading, і не спрацьовує на тач — :hover просто не тримається. */
+.toggle-btn:hover:not(.loading) .toggle-outline { stroke: #B0B0B0; }
+.toggle-btn:hover:not(.loading) .knob-group { filter: drop-shadow(0 1px 2px rgba(26,26,24,.22)); }
+.toggle-btn:hover:not(.loading) .knob-fill { transform: scale(1.08); }
+.toggle-btn.on:hover:not(.loading) .toggle-outline { stroke: #63A836; }
+
+function burst() {                                 // ті самі частинки, що й у серця, лише зелені й менші
+  const n = 6, dist = 14;
+  for (let i = 0; i &lt; n; i++) {
+    const angle = (i / n) * Math.PI * 2;
+    const dot = document.createElement('span');
+    dot.style.cssText = 'position:absolute;left:75%;top:50%;width:3px;height:3px;border-radius:50%;background:#76BF44;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .45s cubic-bezier(.2,.8,.3,1), opacity .45s ease-out;';
+    btn.appendChild(dot);
+    void dot.offsetWidth;                           // forced reflow — той самий фікс, що й для серця
+    dot.style.transform = 'translate(calc(-50% + ' + (Math.cos(angle) * dist) + 'px), calc(-50% + ' + (Math.sin(angle) * dist) + 'px))';
+    dot.style.opacity = '0';
+    setTimeout(() =&gt; dot.remove(), 480);
+  }
+}
+
+btn.addEventListener('click', () =&gt; {
+  const turningOn = !isOn;
+  svg.style.transform = 'scale(0.95)';           // press-фідбек, &lt;100ms
+  setTimeout(() =&gt; (svg.style.transform = 'scale(1)'), 100);
+  btn.classList.add('loading');
+
+  api.updateSetting(turningOn).then(() =&gt; {       // реальний виклик
+    btn.classList.remove('loading');
+    btn.classList.toggle('on', turningOn);
+    btn.setAttribute('aria-pressed', String(turningOn));
+    clipCircle.setAttribute('r', turningOn ? '40' : '0');
+    isOn = turningOn;
+    if (isOn) burst();
+  });
+});</pre>
+
+        <pre class="tab-panel" data-panel="ios">struct SettingToggle: View {
+    @State private var isOn = false
+    @State private var isLoading = false
+
+    let pressHaptic = UIImpactFeedbackGenerator(style: .light)
+
+    var body: some View {
+        ZStack {
+            Capsule()
+                .strokeBorder(Color(hex: "E5E5E5"), lineWidth: 1.5)
+                .background(Capsule().fill(isOn ? Color(hex: "D9F2BF") : .clear))
+                .frame(width: 48, height: 24)
+
+            HStack {
+                if isOn { Spacer() }
+                Circle()
+                    .fill(isOn ? Color(hex: "76BF44") : Color(hex: "AFAFAF"))
+                    .frame(width: 20, height: 20)
+                    .scaleEffect(isLoading ? 0.8 : 1)
+                    .opacity(isLoading ? 0.5 : 1)
+                    .animation(
+                        isLoading ? .easeInOut(duration: 0.5).repeatForever(autoreverses: true) : .default,
+                        value: isLoading
+                    )
+                if !isOn { Spacer() }
+            }
+            .padding(2)
+        }
+        .onTapGesture {
+            let turningOn = !isOn
+            pressHaptic.impactOccurred()
+            isLoading = true
+
+            Task {
+                try? await api.updateSetting(turningOn)   // реальний виклик
+                await MainActor.run {
+                    isLoading = false
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
+                        isOn = turningOn
+                    }
+                }
+            }
+        }
+    }
+}</pre>
+
+        <pre class="tab-panel" data-panel="android">@Composable
+fun SettingToggle() {
+    var isOn by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    val knobOffset by animateDpAsState(
+        targetValue = if (isOn) 24.dp else 0.dp,
+        animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium)
+    )
+
+    Box(
+        modifier = Modifier
+            .size(48.dp, 24.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isOn) Color(0xFFD9F2BF) else Color.Transparent)
+            .border(1.5.dp, Color(0xFFE5E5E5), RoundedCornerShape(12.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                val turningOn = !isOn
+                scope.launch {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    isLoading = true
+                    api.updateSetting(turningOn)          // реальний виклик
+                    isLoading = false
+                    isOn = turningOn
+                }
+            }
+    ) {
+        Box(
+            modifier = Modifier
+                .offset(x = 2.dp + knobOffset, y = 2.dp)
+                .size(20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            val breathe = rememberInfiniteTransition()
+            val pulse by breathe.animateFloat(
+                initialValue = 1f, targetValue = if (isLoading) 0.8f else 1f,
+                animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse)
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .scale(pulse)
+                    .alpha(if (isLoading) pulse else 1f)
+                    .background(if (isOn) Color(0xFF76BF44) else Color(0xFFAFAFAF), CircleShape)
+            )
+        }
+    }
+}</pre>
+      </div>
+      </details>
+    </section>
+
+    <!-- ============ Interaction: Range slider ============ -->
+    <section class="interaction">
+      <div class="interaction-head">
+        <h2>Слайдер (range)</h2>
+        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=7273-16081&t=jqaWVWEAcUC4T2p0-1" target="_blank" rel="noopener">View in Figma →</a>
+      </div>
+
+      <div class="compare">
+        <div class="compare-col is-bad">
+          <span class="compare-tag bad">Зараз</span>
+          <div class="compare-demo">
+            <div class="slider is-linear" id="sliderBefore">
+              <div class="slider-track"></div>
+              <div class="slider-fill" id="sliderBeforeFill"></div>
+              <div class="slider-thumb" id="sliderBeforeMin" tabindex="0"></div>
+              <div class="slider-thumb" id="sliderBeforeMax" tabindex="0"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="compare-col is-good">
+          <span class="compare-tag good">Пропозиція</span>
+          <div class="compare-demo">
+            <div class="slider" id="sliderProposal">
+              <div class="slider-track"></div>
+              <div class="slider-fill" id="sliderFill"></div>
+              <div class="slider-thumb" id="sliderMin" tabindex="0"></div>
+              <div class="slider-thumb" id="sliderMax" tabindex="0"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <details class="code-toggle">
+        <summary>Показати код (Web / iOS / Android)</summary>
+        <div class="code-tabs">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="web">Web</button>
+          <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+          <button class="tab-btn" data-tab="android">Android · Compose</button>
+        </div>
+
+        <pre class="tab-panel active" data-panel="web">&lt;div class="slider" id="slider"&gt;
+  &lt;div class="slider-track"&gt;&lt;/div&gt;
+  &lt;div class="slider-fill" id="fill"&gt;&lt;/div&gt;
+  &lt;div class="slider-thumb" id="thumbMin" tabindex="0"&gt;&lt;/div&gt;
+  &lt;div class="slider-thumb" id="thumbMax" tabindex="0"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+.slider-fill, .slider-thumb {
+  transition: left var(--motion-duration-quick) var(--motion-easing-spring);
+}
+.slider-thumb:hover { transform: scale(1.08); box-shadow: 0 1px 4px rgba(0,0,0,.18); }
+.slider-thumb.grabbing {
+  transform: scale(1.2);
+  border-color: #76BF44;
+  box-shadow: 0 2px 8px rgba(0,0,0,.22);
+}
+/* На час активного тягання transition вимикається — рух має бути 1:1 з курсором,
+   без затримки. Тільки програмні стрибки (клік по треку) анімуються плавно. */
+.slider.dragging .slider-thumb,
+.slider.dragging .slider-fill { transition: none; }
+
+function makeDraggable(thumb, getMin, getMax, setValue, isMinThumb) {
+  thumb.addEventListener('pointerdown', (e) =&gt; {
+    thumb.setPointerCapture(e.pointerId);
+    thumb.classList.add('grabbing');
+    slider.classList.add('dragging');            // вимикає transition на час drag
+
+    function move(ev) {
+      const rect = track.getBoundingClientRect();
+      let px = ev.clientX - rect.left;
+      px = Math.max(12, Math.min(rect.width - 12, px));
+      if (isMinThumb) px = Math.min(px, getMax() - 16);
+      else px = Math.max(px, getMin() + 16);
+      setValue(px);                               // 1:1 з курсором, без анімації
+    }
+    function up() {
+      thumb.classList.remove('grabbing');
+      slider.classList.remove('dragging');        // повертає spring-transition для наступних стрибків
+      thumb.removeEventListener('pointermove', move);
+      thumb.removeEventListener('pointerup', up);
+    }
+    thumb.addEventListener('pointermove', move);
+    thumb.addEventListener('pointerup', up);
+  });
+}
+
+// Клік по треку (не по повзунку) — стрибок найближчого повзунка,
+// анімований spring-переходом (transition тут не вимкнено, бо це не drag)
+track.addEventListener('click', (e) =&gt; {
+  const rect = track.getBoundingClientRect();
+  const px = e.clientX - rect.left;
+  const nearest = Math.abs(px - minX) &lt; Math.abs(px - maxX) ? 'min' : 'max';
+  setValue(nearest, px);
+});</pre>
+
+        <pre class="tab-panel" data-panel="ios">struct RangeSlider: View {
+    @State private var minValue: CGFloat = 0.0
+    @State private var maxValue: CGFloat = 0.5
+    @State private var draggingMin = false
+    @State private var draggingMax = false
+
+    let trackWidth: CGFloat = 288
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            Capsule().fill(Color(hex: "EBEBEB")).frame(height: 8)
+            Capsule().fill(Color(hex: "76BF44"))
+                .frame(width: (maxValue - minValue) * trackWidth, height: 8)
+                .offset(x: minValue * trackWidth)
+
+            thumb(value: $minValue, isDragging: $draggingMin, otherValue: maxValue, isMin: true)
+            thumb(value: $maxValue, isDragging: $draggingMax, otherValue: minValue, isMin: false)
+        }
+        .frame(width: trackWidth, height: 24)
+    }
+
+    func thumb(value: Binding&lt;CGFloat&gt;, isDragging: Binding&lt;Bool&gt;, otherValue: CGFloat, isMin: Bool) -&gt; some View {
+        Circle()
+            .fill(.white)
+            .frame(width: 22, height: 22)
+            .overlay(Circle().stroke(isDragging.wrappedValue ? Color(hex: "76BF44") : Color(hex: "D8D8D8"), lineWidth: 2))
+            .scaleEffect(isDragging.wrappedValue ? 1.2 : 1)
+            .shadow(color: .black.opacity(isDragging.wrappedValue ? 0.22 : 0), radius: 4, y: 2)
+            .offset(x: value.wrappedValue * trackWidth - trackWidth / 2)
+            // Під час активного drag — без withAnimation, рух 1:1 з пальцем.
+            // Пружний withAnimation лишається тільки для програмних стрибків.
+            .animation(isDragging.wrappedValue ? nil : .spring(response: 0.25, dampingFraction: 0.7), value: value.wrappedValue)
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { g in
+                        isDragging.wrappedValue = true
+                        let raw = (g.location.x + trackWidth / 2) / trackWidth
+                        value.wrappedValue = isMin
+                            ? min(max(0, raw), otherValue - 0.06)
+                            : max(min(1, raw), otherValue + 0.06)
+                    }
+                    .onEnded { _ in
+                        isDragging.wrappedValue = false
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {}
+                    }
+            )
+    }
+}</pre>
+
+        <pre class="tab-panel" data-panel="android">@Composable
+fun RangeSlider() {
+    var minValue by remember { mutableStateOf(0f) }
+    var maxValue by remember { mutableStateOf(0.5f) }
+    var isDragging by remember { mutableStateOf(false) }
+    val trackWidthDp = 288.dp
+
+    BoxWithConstraints(modifier = Modifier.size(trackWidthDp, 24.dp)) {
+        val trackWidthPx = constraints.maxWidth.toFloat()
+
+        Box(
+            Modifier
+                .align(Alignment.CenterStart)
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color(0xFFEBEBEB))
+        )
+        Box(
+            Modifier
+                .align(Alignment.CenterStart)
+                .offset { IntOffset((minValue * trackWidthPx).toInt(), 0) }
+                .width(((maxValue - minValue) * trackWidthDp.value).dp)
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color(0xFF76BF44))
+        )
+
+        listOf(true, false).forEach { isMin ->
+            val value = if (isMin) minValue else maxValue
+            // Під час drag — offset рахується напряму з пальця (1:1, без анімації).
+            // animateFloatAsState залишається тільки для стрибків по кліку на трек.
+            val scale by animateFloatAsState(if (isDragging) 1.2f else 1f)
+
+            Box(
+                Modifier
+                    .align(Alignment.CenterStart)
+                    .offset { IntOffset((value * trackWidthPx).toInt() - 44, 0) }
+                    .size(22.dp)
+                    .scale(scale)
+                    .shadow(if (isDragging) 4.dp else 0.dp, CircleShape)
+                    .border(2.dp, if (isDragging) Color(0xFF76BF44) else Color(0xFFD8D8D8), CircleShape)
+                    .background(Color.White, CircleShape)
+                    .pointerInput(isMin) {
+                        detectDragGestures(
+                            onDragStart = { isDragging = true },
+                            onDragEnd = { isDragging = false }
+                        ) { change, _ ->
+                            val raw = (change.position.x / trackWidthPx).coerceIn(0f, 1f)
+                            if (isMin) minValue = raw.coerceAtMost(maxValue - 0.06f)
+                            else maxValue = raw.coerceAtLeast(minValue + 0.06f)
                         }
                     }
             )
@@ -1193,6 +1692,19 @@ fun RadioRow(itemId: String, isSelected: Boolean, onSelect: () -&gt; Unit) {
         return new Promise((resolve) => setTimeout(resolve, delay));
       }
 
+      function succeed() {
+        pending = false;
+        active = true;
+        wrap.classList.remove('loading');
+        btn.setAttribute('aria-pressed', 'true');
+        outline.setAttribute('stroke', '#212121');
+        clipCircle.style.transition = 'r .15s cubic-bezier(.34,1.56,.64,1)';
+        clipCircle.setAttribute('r', '12');
+        svg.style.transform = 'scale(1.06)';
+        setTimeout(() => (svg.style.transform = 'scale(1)'), 150);
+        status.textContent = '';
+      }
+
       btn.addEventListener('click', () => {
         if (pending) return;
 
@@ -1207,21 +1719,16 @@ fun RadioRow(itemId: String, isSelected: Boolean, onSelect: () -&gt; Unit) {
 
         pending = true;
         svg.style.transform = 'scale(0.95)';
+
+        if (!slowToggle.checked) {
+          // швидкий шлях: без стану завантаження, щоб не відчувалось як довге перемикання
+          succeed();
+          return;
+        }
+
         wrap.classList.add('loading');
         status.textContent = 'Підтверджуємо…';
-
-        fakeRequest().then(() => waitForCycle(trace)).then(() => {
-          pending = false;
-          active = true;
-          wrap.classList.remove('loading');
-          btn.setAttribute('aria-pressed', 'true');
-          outline.setAttribute('stroke', '#212121');
-          clipCircle.style.transition = 'r .15s cubic-bezier(.34,1.56,.64,1)';
-          clipCircle.setAttribute('r', '12');
-          svg.style.transform = 'scale(1.06)';
-          setTimeout(() => (svg.style.transform = 'scale(1)'), 150);
-          status.textContent = '';
-        });
+        fakeRequest().then(() => waitForCycle(trace)).then(succeed);
       });
     }
 
@@ -1259,6 +1766,11 @@ fun RadioRow(itemId: String, isSelected: Boolean, onSelect: () -&gt; Unit) {
       const label = row.querySelector('.checkbox-label');
       let active = false;
       let pending = false;
+
+      if (i === 0) {
+        active = true;
+        fill.style.display = 'block';
+      }
 
       btn.addEventListener('mouseenter', () => { if (!active) outline.setAttribute('stroke', '#212121'); });
       btn.addEventListener('mouseleave', () => { if (!active) outline.setAttribute('stroke', '#BFBFBF'); });
@@ -1310,7 +1822,7 @@ fun RadioRow(itemId: String, isSelected: Boolean, onSelect: () -&gt; Unit) {
       return row;
     }
 
-    function wireRow(row) {
+    function wireRow(row, index) {
       const wrap = row.querySelector('.checkbox-wrap');
       const btn = row.querySelector('.checkbox-btn');
       const svg = row.querySelector('.checkbox-svg');
@@ -1319,6 +1831,12 @@ fun RadioRow(itemId: String, isSelected: Boolean, onSelect: () -&gt; Unit) {
       const label = row.querySelector('.checkbox-label');
       let active = false;
       let pending = false;
+
+      if (index === 0) {
+        active = true;
+        outline.setAttribute('stroke', '#212121');
+        clipCircle.setAttribute('r', '10');
+      }
 
       /* Той самий напрямок трейсу, що й для чекбокса (без реверсу точок) */
       const total = outline.getTotalLength();
@@ -1371,27 +1889,35 @@ fun RadioRow(itemId: String, isSelected: Boolean, onSelect: () -&gt; Unit) {
         }
       };
 
+      function succeed() {
+        pending = false;
+        active = true;
+        wrap.classList.remove('loading');
+        btn.setAttribute('aria-pressed', 'true');
+        outline.setAttribute('stroke', '#212121');
+        clipCircle.style.transition = 'r .15s cubic-bezier(.34,1.56,.64,1)';
+        clipCircle.setAttribute('r', '10');
+        svg.style.transform = 'scale(1.06)';
+        setTimeout(() => (svg.style.transform = 'scale(1)'), 150);
+        status.textContent = '';
+        controllers.forEach((c) => c !== controller && c.deselect());
+      }
+
       btn.addEventListener('click', () => {
         if (pending || active) return; // radio: клік по вже обраному нічого не робить
 
         pending = true;
         svg.style.transform = 'scale(0.95)';
+
+        if (!slowToggle.checked) {
+          // швидкий шлях: без стану завантаження, щоб не відчувалось як довге перемикання
+          succeed();
+          return;
+        }
+
         wrap.classList.add('loading');
         status.textContent = 'Підтверджуємо…';
-
-        fakeRequest().then(() => waitForCycle(trace)).then(() => {
-          pending = false;
-          active = true;
-          wrap.classList.remove('loading');
-          btn.setAttribute('aria-pressed', 'true');
-          outline.setAttribute('stroke', '#212121');
-          clipCircle.style.transition = 'r .15s cubic-bezier(.34,1.56,.64,1)';
-          clipCircle.setAttribute('r', '10');
-          svg.style.transform = 'scale(1.06)';
-          setTimeout(() => (svg.style.transform = 'scale(1)'), 150);
-          status.textContent = '';
-          controllers.forEach((c) => c !== controller && c.deselect());
-        });
+        fakeRequest().then(() => waitForCycle(trace)).then(succeed);
       });
 
       return controller;
@@ -1401,9 +1927,182 @@ fun RadioRow(itemId: String, isSelected: Boolean, onSelect: () -&gt; Unit) {
     for (let i = 0; i < 3; i++) {
       const row = buildRow(i);
       list.appendChild(row);
-      controllers.push(wireRow(row));
+      controllers.push(wireRow(row, i));
     }
   })();
+
+  /* ---- Toggle: "Зараз" — same bad pattern, abrupt jump after a silent pause ---- */
+  (function wireBeforeToggle() {
+    const btn = document.getElementById('toggleBefore');
+    const trackFill = document.getElementById('toggleBeforeTrackFill');
+    const knob = document.getElementById('toggleBeforeKnob');
+    let on = false;
+    let pending = false;
+
+    btn.addEventListener('click', () => {
+      if (pending) return;
+      pending = true;
+      setTimeout(() => {
+        on = !on;
+        trackFill.style.display = on ? 'block' : 'none';
+        knob.setAttribute('cx', on ? '36' : '12');
+        knob.setAttribute('fill', on ? '#76BF44' : '#D8D8D8');
+        pending = false;
+      }, 800);
+    });
+  })();
+
+  /* ---- Toggle: "Пропозиція" — press feedback instantly, knob slide + color
+     change wait for confirmation; a traced ring around the knob (same circular
+     draw/erase motif as the other components) shows while pending ---- */
+  (function wireProposalToggle() {
+    const btn = document.getElementById('toggleBtn');
+    const svg = document.getElementById('toggleSvg');
+    const clipCircle = document.getElementById('toggleClipCircle');
+    const knobFill = document.getElementById('knobFill');
+    const slowToggle = document.getElementById('slowNetToggleToggle');
+    const status = document.getElementById('toggleStatus');
+    let on = false;
+    let pending = false;
+
+    function fakeRequest() {
+      const slow = slowToggle.checked;
+      const delay = slow ? 2200 + Math.random() * 1200 : 250 + Math.random() * 250;
+      return new Promise((resolve) => setTimeout(resolve, delay));
+    }
+
+    function burst() {
+      const n = 6, dist = 14;
+      for (let i = 0; i < n; i++) {
+        const angle = (i / n) * Math.PI * 2;
+        const dot = document.createElement('span');
+        dot.style.cssText = 'position:absolute;left:75%;top:50%;width:3px;height:3px;border-radius:50%;background:#76BF44;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .45s cubic-bezier(.2,.8,.3,1), opacity .45s ease-out;';
+        btn.appendChild(dot);
+        void dot.offsetWidth; // примусовий reflow — той самий фікс, що й для серця
+        dot.style.transform = 'translate(calc(-50% + ' + (Math.cos(angle) * dist) + 'px), calc(-50% + ' + (Math.sin(angle) * dist) + 'px))';
+        dot.style.opacity = '0';
+        setTimeout(() => dot.remove(), 480);
+      }
+    }
+
+    btn.addEventListener('click', () => {
+      if (pending) return;
+      const turningOn = !on;
+
+      pending = true;
+      svg.style.transform = 'scale(0.95)';
+      setTimeout(() => (svg.style.transform = 'scale(1)'), 100);
+      btn.classList.add('loading');
+      status.textContent = 'Зберігаємо…';
+
+      fakeRequest().then(() => waitForCycle(knobFill)).then(() => {
+        pending = false;
+        on = turningOn;
+        btn.classList.remove('loading');
+        btn.classList.toggle('on', on);
+        btn.setAttribute('aria-pressed', String(on));
+        clipCircle.style.transition = 'r .3s cubic-bezier(.34,1.56,.64,1)';
+        clipCircle.setAttribute('r', on ? '40' : '0');
+        status.textContent = '';
+        if (on) burst();
+      });
+    });
+  })();
+
+  /* ---- Range slider: shared factory, difference is purely in CSS transitions
+     (is-linear removes them entirely for "Зараз") plus grab/hover feedback
+     which "Зараз" simply doesn't wire up at all ---- */
+  function wireSlider(opts) {
+    const slider = document.getElementById(opts.sliderId);
+    const track = slider.querySelector('.slider-track');
+    const fill = document.getElementById(opts.fillId);
+    const minThumb = document.getElementById(opts.minId);
+    const maxThumb = document.getElementById(opts.maxId);
+    const pad = 12; // половина товщини thumb — межі треку
+
+    let minPx, maxPx;
+
+    function width() { return slider.getBoundingClientRect().width; }
+
+    function render() {
+      minThumb.style.left = minPx + 'px';
+      maxThumb.style.left = maxPx + 'px';
+      fill.style.left = minPx + 'px';
+      fill.style.width = (maxPx - minPx) + 'px';
+    }
+
+    function setMin(px) {
+      minPx = Math.max(pad, Math.min(px, maxPx - 16));
+      render();
+    }
+    function setMax(px) {
+      maxPx = Math.min(width() - pad, Math.max(px, minPx + 16));
+      render();
+    }
+
+    // початкові позиції: 0% і ~50%, як у наданому дизайні (12px і 144px на 288px треку)
+    minPx = pad;
+    maxPx = width() * 0.5;
+    render();
+
+    function burst(x, y) {
+      const n = 8, dist = 26;
+      for (let i = 0; i < n; i++) {
+        const angle = (i / n) * Math.PI * 2;
+        const dot = document.createElement('span');
+        dot.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:4px;height:4px;border-radius:50%;background:#76BF44;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
+        slider.appendChild(dot);
+        void dot.offsetWidth; // примусовий reflow — той самий фікс, що й для серця
+        dot.style.transform = 'translate(calc(-50% + ' + (Math.cos(angle) * dist) + 'px), calc(-50% + ' + (Math.sin(angle) * dist) + 'px))';
+        dot.style.opacity = '0';
+        setTimeout(() => dot.remove(), 550);
+      }
+    }
+
+    function makeDraggable(thumb, isMinThumb) {
+      thumb.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        thumb.setPointerCapture(e.pointerId);
+        if (opts.interactive) {
+          thumb.classList.add('grabbing');
+          slider.classList.add('dragging');
+        }
+
+        function move(ev) {
+          const rect = slider.getBoundingClientRect();
+          const px = ev.clientX - rect.left;
+          if (isMinThumb) setMin(px); else setMax(px);
+        }
+        function up() {
+          if (opts.interactive) {
+            thumb.classList.remove('grabbing');
+            slider.classList.remove('dragging');
+            burst(isMinThumb ? minPx : maxPx, 12);   // відпустив — той самий ефект, що й "додати в обране"
+          }
+          thumb.removeEventListener('pointermove', move);
+          thumb.removeEventListener('pointerup', up);
+        }
+        thumb.addEventListener('pointermove', move);
+        thumb.addEventListener('pointerup', up);
+      });
+    }
+
+    makeDraggable(minThumb, true);
+    makeDraggable(maxThumb, false);
+
+    if (opts.interactive) {
+      track.addEventListener('click', (e) => {
+        const rect = slider.getBoundingClientRect();
+        const px = e.clientX - rect.left;
+        const nearest = Math.abs(px - minPx) < Math.abs(px - maxPx) ? 'min' : 'max';
+        if (nearest === 'min') setMin(px); else setMax(px);
+        burst(nearest === 'min' ? minPx : maxPx, 12);
+      });
+    }
+  }
+
+  wireSlider({ sliderId: 'sliderBefore', fillId: 'sliderBeforeFill', minId: 'sliderBeforeMin', maxId: 'sliderBeforeMax', interactive: false });
+  wireSlider({ sliderId: 'sliderProposal', fillId: 'sliderFill', minId: 'sliderMin', maxId: 'sliderMax', interactive: true });
 
   /* ---- "Повільний інтернет" toggles: same fill-in animation as the
      proposal checkbox, just local — no request, no loading state ---- */
