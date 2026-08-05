@@ -121,11 +121,9 @@
   .wishlist-btn svg { transition: transform var(--motion-duration-quick) var(--motion-easing-spring); }
   .wishlist-btn path.outline { transition: stroke var(--motion-duration-fast) var(--motion-easing-standard), opacity var(--motion-duration-base) var(--motion-easing-standard); }
   .heart-wrap.loading path.outline { opacity: 0; }
-  /* Швидкий шлях: outline ховається через inline style напряму в JS */
 
   .trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity var(--motion-duration-base) var(--motion-easing-standard); }
   .heart-wrap.loading .trace-path { opacity: 1; animation: heart-trace 1.6s infinite; }
-  /* Швидкий шлях: трейс керується через inline-стилі в JS — CSS-клас не потрібен */
   @keyframes heart-trace {
     0% { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
     50% { stroke-dashoffset: 0; animation-timing-function: var(--motion-easing-accelerate); }
@@ -1943,7 +1941,6 @@ fun EVADropdown(options: List&lt;String&gt;) {
     });
 
     function fakeRequest() {
-      // Повільний режим: 2.4–3.6с, імітує поганий зв'язок
       return new Promise((resolve) => setTimeout(resolve, 2400 + Math.random() * 1200));
     }
 
@@ -1954,7 +1951,7 @@ fun EVADropdown(options: List&lt;String&gt;) {
         const dot = document.createElement('span');
         dot.style.cssText = 'position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#212121;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
         wrap.appendChild(dot);
-        void dot.offsetWidth; // примусовий reflow — гарантує, що початковий стан закомічений до зміни
+        void dot.offsetWidth;
         dot.style.transform = 'translate(calc(-50% + ' + (Math.cos(angle) * dist) + 'px), calc(-50% + ' + (Math.sin(angle) * dist) + 'px))';
         dot.style.opacity = '0';
         setTimeout(() => dot.remove(), 550);
@@ -1965,7 +1962,6 @@ fun EVADropdown(options: List&lt;String&gt;) {
       pending = false;
       active = true;
       wrap.classList.remove('loading');
-      wrap.classList.remove('loading-once');
       outline.setAttribute('stroke', '#212121');
       btn.setAttribute('aria-pressed', 'true');
       clipCircle.style.transition = 'r .45s cubic-bezier(.34,1.56,.64,1)';
@@ -1994,28 +1990,15 @@ fun EVADropdown(options: List&lt;String&gt;) {
 
       pending = true;
       svg.style.transform = 'scale(0.9)';
+      wrap.classList.add('loading');
 
       if (!slowToggle.checked) {
-        // Швидкий шлях: один прохід контуру → одразу succeed()
+        // Без галочки: контур промальовується рівно один раз (1.6с) → succeed()
+        // Чекаємо перший animationiteration (= кінець першого циклу) і одразу succeed
         status.textContent = 'Додаємо…';
-        outline.style.opacity = '0';
-        trace.style.transition = 'none';
-        trace.style.opacity = '1';
-        trace.style.animation = 'none';       // скидаємо попередній стан
-        void trace.offsetWidth;               // forced reflow — без цього новий animation може не запустись
-        trace.style.animation = 'heart-trace 1.6s 1 forwards var(--motion-easing-decelerate)';
-        function onEnd() {
-          trace.removeEventListener('animationend', onEnd);
-          trace.style.animation = '';
-          trace.style.opacity = '0';
-          outline.style.opacity = '';
-          trace.style.transition = '';
-          succeed();
-        }
-        trace.addEventListener('animationend', onEnd);
+        waitForCycle(trace).then(succeed);
       } else {
-        // Повільний шлях: нескінченний контур поки чекаємо сервер
-        wrap.classList.add('loading');
+        // З галочкою: нескінченний контур, чекаємо реальну відповідь сервера
         status.textContent = 'Надсилаємо запит…';
         fakeRequest().then(() => waitForCycle(trace)).then(succeed);
       }
