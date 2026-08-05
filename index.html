@@ -251,26 +251,28 @@
   }
   .dd-wrap.is-good .dd-menu {
     overflow: hidden; max-height: 0; opacity: 0; pointer-events: none;
+    transform: translateY(-6px);
     transition:
-      max-height var(--motion-duration-expand) var(--motion-easing-decelerate),
-      opacity    var(--motion-duration-fast)   var(--motion-easing-standard);
+      max-height  350ms cubic-bezier(0, 0, 0.2, 1),
+      opacity     150ms var(--motion-easing-standard),
+      transform   350ms cubic-bezier(0, 0, 0.2, 1);
   }
   .dd-wrap.is-good.open .dd-menu {
-    max-height: 300px; opacity: 1; pointer-events: auto;
+    max-height: 300px; opacity: 1; pointer-events: auto; transform: translateY(0);
   }
   /* Стагер-поява рядків при відкритті */
   .dd-wrap.is-good .dd-item {
     transition:
       background var(--motion-duration-fast) var(--motion-easing-standard),
-      opacity    var(--motion-duration-base) var(--motion-easing-decelerate),
-      transform  var(--motion-duration-base) var(--motion-easing-decelerate);
-    opacity: 0; transform: translateY(-4px);
+      opacity    200ms var(--motion-easing-decelerate),
+      transform  200ms var(--motion-easing-decelerate);
+    opacity: 0; transform: translateY(-6px);
   }
   .dd-wrap.is-good.open .dd-item { opacity: 1; transform: translateY(0); }
-  .dd-wrap.is-good.open .dd-item:nth-child(1) { transition-delay: 50ms, 50ms, 50ms; }
-  .dd-wrap.is-good.open .dd-item:nth-child(2) { transition-delay: 80ms, 80ms, 80ms; }
-  .dd-wrap.is-good.open .dd-item:nth-child(3) { transition-delay:110ms,110ms,110ms; }
-  .dd-wrap.is-good.open .dd-item:nth-child(4) { transition-delay:140ms,140ms,140ms; }
+  .dd-wrap.is-good.open .dd-item:nth-child(1) { transition-delay: 40ms; }
+  .dd-wrap.is-good.open .dd-item:nth-child(2) { transition-delay: 70ms; }
+  .dd-wrap.is-good.open .dd-item:nth-child(3) { transition-delay:100ms; }
+  .dd-wrap.is-good.open .dd-item:nth-child(4) { transition-delay:130ms; }
   .dd-wrap.is-good .dd-item:hover { background: #fafafa; }
 
   .dd-menu {
