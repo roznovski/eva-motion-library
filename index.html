@@ -190,6 +190,77 @@
   .toggle-btn:hover:not(.loading) .knob-fill { transform: scale(1.08); }
   .toggle-btn.on:hover:not(.loading) .toggle-outline { stroke: #63A836; }
 
+  /* ---------- Dropdown component ---------- */
+  .compare-demo.dd-demo { height: auto; min-height: 216px; align-items: flex-start; padding: 12px 0 16px; }
+  .dd-wrap { position: relative; width: 220px; user-select: none; }
+  .dd-trigger {
+    display: flex; align-items: center; gap: 8px; height: 40px;
+    background: #fff; border: 1.5px solid #d8d8d8; border-radius: 8px;
+    padding: 0 16px; cursor: pointer; width: 100%;
+    font-family: 'Proxima Nova', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px; font-weight: 600; color: #212121; outline: none;
+    box-shadow: none; appearance: none; text-align: left;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dd-trigger-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dd-chevron { flex-shrink: 0; display: block; }
+
+  /* Зараз: жодних transitions, меню з'являється/зникає миттєво */
+  .dd-wrap.is-bad .dd-trigger { transition: none; }
+  .dd-wrap.is-bad .dd-menu   { display: none; }
+  .dd-wrap.is-bad.open .dd-menu { display: block; }
+  .dd-wrap.is-bad .dd-item  { transition: none; }
+
+  /* Пропозиція: плавне відкриття через max-height + opacity, chevron крутиться */
+  .dd-wrap.is-good .dd-trigger {
+    transition:
+      border-color var(--motion-duration-fast) var(--motion-easing-standard),
+      border-width  var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+  .dd-wrap.is-good .dd-trigger:hover:not(:active) { border-color: #b0b0b0; }
+  .dd-wrap.is-good.open .dd-trigger { border-width: 2px; }
+  .dd-wrap.is-good .dd-chevron {
+    transition: transform var(--motion-duration-expand) var(--motion-easing-standard);
+  }
+  .dd-wrap.is-good.open .dd-chevron { transform: rotate(180deg); }
+  .dd-wrap.is-good .dd-menu {
+    overflow: hidden; max-height: 0; opacity: 0; pointer-events: none;
+    transition:
+      max-height var(--motion-duration-expand) var(--motion-easing-decelerate),
+      opacity    var(--motion-duration-fast)   var(--motion-easing-standard);
+  }
+  .dd-wrap.is-good.open .dd-menu {
+    max-height: 300px; opacity: 1; pointer-events: auto;
+  }
+  /* Стагер-поява рядків при відкритті */
+  .dd-wrap.is-good .dd-item {
+    transition:
+      background var(--motion-duration-fast) var(--motion-easing-standard),
+      opacity    var(--motion-duration-base) var(--motion-easing-decelerate),
+      transform  var(--motion-duration-base) var(--motion-easing-decelerate);
+    opacity: 0; transform: translateY(-4px);
+  }
+  .dd-wrap.is-good.open .dd-item { opacity: 1; transform: translateY(0); }
+  .dd-wrap.is-good.open .dd-item:nth-child(1) { transition-delay: 50ms, 50ms, 50ms; }
+  .dd-wrap.is-good.open .dd-item:nth-child(2) { transition-delay: 80ms, 80ms, 80ms; }
+  .dd-wrap.is-good.open .dd-item:nth-child(3) { transition-delay:110ms,110ms,110ms; }
+  .dd-wrap.is-good.open .dd-item:nth-child(4) { transition-delay:140ms,140ms,140ms; }
+  .dd-wrap.is-good .dd-item:hover { background: #fafafa; }
+
+  .dd-menu {
+    margin-top: 4px; background: #fff; border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.10);
+    padding: 8px 0;
+  }
+  .dd-item {
+    display: flex; align-items: center; gap: 12px; height: 40px;
+    padding: 0 12px; cursor: pointer;
+    font-family: 'Proxima Nova', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px; font-weight: 400; color: #212121;
+  }
+  .dd-item-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dd-item-check { flex-shrink: 0; width: 20px; height: 20px; border: 1.5px solid #d8d8d8; border-radius: 4px; }
+
   /* ---------- Slider component ---------- */
   .slider { position: relative; width: 288px; height: 24px; max-width: 100%; touch-action: none; }
   .slider-track { position: absolute; left: 0; right: 0; top: 8px; height: 8px; border-radius: 4px; background: #EBEBEB; }
@@ -1410,6 +1481,358 @@ fun RangeSlider() {
       </details>
     </section>
 
+    <!-- ═══════════════ DROPDOWN ═══════════════ -->
+    <section class="interaction">
+      <div class="interaction-head">
+        <h2>Випадаючий список (dropdown)</h2>
+        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=7302-9347&t=hRdb1Xds5ThByY8a-1" target="_blank" rel="noopener">View in Figma →</a>
+      </div>
+
+      <div class="compare">
+        <!-- ─── Зараз ─── -->
+        <div class="compare-col is-bad">
+          <span class="compare-tag bad">Зараз</span>
+          <div class="compare-demo dd-demo">
+            <div class="dd-wrap is-bad" id="ddBad">
+              <button class="dd-trigger" id="ddBadTrigger" aria-haspopup="listbox" aria-expanded="false">
+                <span class="dd-trigger-label" id="ddBadLabel">Select</span>
+                <svg class="dd-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <polyline points="5,7.5 10,12.5 15,7.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="dd-menu" id="ddBadMenu" role="listbox">
+                <div class="dd-item" role="option" data-value="Option 1">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4" width="15" height="10" rx="1.5" stroke="#212121" stroke-width="1.5"/><line x1="6" y1="16" x2="9" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="16" x2="11" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span class="dd-item-text">Option 1</span>
+                  <div class="dd-item-check"></div>
+                </div>
+                <div class="dd-item" role="option" data-value="Option 2">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4" width="15" height="10" rx="1.5" stroke="#212121" stroke-width="1.5"/><line x1="6" y1="16" x2="9" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="16" x2="11" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span class="dd-item-text">Option 2</span>
+                  <div class="dd-item-check"></div>
+                </div>
+                <div class="dd-item" role="option" data-value="Option 3">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4" width="15" height="10" rx="1.5" stroke="#212121" stroke-width="1.5"/><line x1="6" y1="16" x2="9" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="16" x2="11" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span class="dd-item-text">Option 3</span>
+                  <div class="dd-item-check"></div>
+                </div>
+                <div class="dd-item" role="option" data-value="Option 4">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4" width="15" height="10" rx="1.5" stroke="#212121" stroke-width="1.5"/><line x1="6" y1="16" x2="9" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="16" x2="11" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span class="dd-item-text">Option 4</span>
+                  <div class="dd-item-check"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── Пропозиція ─── -->
+        <div class="compare-col is-good">
+          <span class="compare-tag good">Пропозиція</span>
+          <div class="compare-demo dd-demo">
+            <div class="dd-wrap is-good" id="ddGood">
+              <button class="dd-trigger" id="ddGoodTrigger" aria-haspopup="listbox" aria-expanded="false">
+                <span class="dd-trigger-label" id="ddGoodLabel">Select</span>
+                <svg class="dd-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <polyline points="5,7.5 10,12.5 15,7.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="dd-menu" id="ddGoodMenu" role="listbox">
+                <div class="dd-item" role="option" data-value="Option 1">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4" width="15" height="10" rx="1.5" stroke="#212121" stroke-width="1.5"/><line x1="6" y1="16" x2="9" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="16" x2="11" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span class="dd-item-text">Option 1</span>
+                  <div class="dd-item-check"></div>
+                </div>
+                <div class="dd-item" role="option" data-value="Option 2">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4" width="15" height="10" rx="1.5" stroke="#212121" stroke-width="1.5"/><line x1="6" y1="16" x2="9" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="16" x2="11" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span class="dd-item-text">Option 2</span>
+                  <div class="dd-item-check"></div>
+                </div>
+                <div class="dd-item" role="option" data-value="Option 3">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4" width="15" height="10" rx="1.5" stroke="#212121" stroke-width="1.5"/><line x1="6" y1="16" x2="9" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="16" x2="11" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span class="dd-item-text">Option 3</span>
+                  <div class="dd-item-check"></div>
+                </div>
+                <div class="dd-item" role="option" data-value="Option 4">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4" width="15" height="10" rx="1.5" stroke="#212121" stroke-width="1.5"/><line x1="6" y1="16" x2="9" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="16" x2="11" y2="14" stroke="#212121" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span class="dd-item-text">Option 4</span>
+                  <div class="dd-item-check"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="status-line" id="ddStatus"></p>
+          <div class="tokens">
+            <span class="token">--motion-duration-expand</span>
+            <span class="token">--motion-easing-decelerate</span>
+            <span class="token">--motion-easing-standard</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="code-toggle">
+        <summary>Показати код (Web / iOS / Android)</summary>
+        <div class="code-tabs">
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="web">Web</button>
+            <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+            <button class="tab-btn" data-tab="android">Android · Compose</button>
+          </div>
+
+          <pre class="tab-panel active" data-panel="web">&lt;div class="dd-wrap"&gt;
+  &lt;button class="dd-trigger" aria-haspopup="listbox" aria-expanded="false"&gt;
+    &lt;span class="dd-label"&gt;Select&lt;/span&gt;
+    &lt;svg class="dd-chevron" width="20" height="20"&gt;&lt;!-- chevron path --&gt;&lt;/svg&gt;
+  &lt;/button&gt;
+  &lt;div class="dd-menu" role="listbox"&gt;
+    &lt;div class="dd-item" role="option"&gt;Option 1&lt;/div&gt;
+    &lt;div class="dd-item" role="option"&gt;Option 2&lt;/div&gt;
+    &lt;div class="dd-item" role="option"&gt;Option 3&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+/* Chevron обертається 180° при відкритті */
+.dd-chevron {
+  transition: transform var(--motion-duration-expand) var(--motion-easing-standard);
+}
+.dd-wrap.open .dd-chevron { transform: rotate(180deg); }
+
+/* Тригер отримує товщу рамку коли розкритий */
+.dd-trigger {
+  border: 1.5px solid #d8d8d8;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-width  var(--motion-duration-fast) var(--motion-easing-standard);
+}
+.dd-wrap.open .dd-trigger { border-width: 2px; }
+.dd-trigger:hover { border-color: #b0b0b0; }
+
+/* Меню: max-height + opacity — не height, бо auto не анімується.
+   Значення max-height має бути достатнім, але не надмірним —
+   великий запас сповільнює easing (браузер анімує порожній простір). */
+.dd-menu {
+  overflow: hidden;
+  max-height: 0; opacity: 0; pointer-events: none;
+  transition:
+    max-height var(--motion-duration-expand) var(--motion-easing-decelerate),
+    opacity    var(--motion-duration-fast)   var(--motion-easing-standard);
+  margin-top: 4px; background: #fff; border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.10);
+  padding: 8px 0;
+}
+.dd-wrap.open .dd-menu {
+  max-height: 300px; opacity: 1; pointer-events: auto;
+}
+
+/* Рядки проявляються із стагером, щоб список "розпускався" зверху вниз */
+.dd-item {
+  opacity: 0; transform: translateY(-4px);
+  transition:
+    background var(--motion-duration-fast) var(--motion-easing-standard),
+    opacity    var(--motion-duration-base) var(--motion-easing-decelerate),
+    transform  var(--motion-duration-base) var(--motion-easing-decelerate);
+}
+.dd-wrap.open .dd-item:nth-child(1) { opacity:1; transform:none; transition-delay: 50ms; }
+.dd-wrap.open .dd-item:nth-child(2) { opacity:1; transform:none; transition-delay: 80ms; }
+.dd-wrap.open .dd-item:nth-child(3) { opacity:1; transform:none; transition-delay:110ms; }
+.dd-wrap.open .dd-item:nth-child(4) { opacity:1; transform:none; transition-delay:140ms; }
+
+/* Hover на рядку — миттєвий фон, без затримки */
+.dd-item:hover { background: #fafafa; }
+
+// JS: клік по тригеру
+trigger.addEventListener('click', () =&gt; {
+  const isOpen = wrap.classList.toggle('open');
+  trigger.setAttribute('aria-expanded', isOpen);
+});
+
+// Закрити при кліку поза дропдауном
+document.addEventListener('click', (e) =&gt; {
+  if (!wrap.contains(e.target)) wrap.classList.remove('open');
+});
+
+// Вибір опції
+menu.querySelectorAll('.dd-item').forEach((item) =&gt; {
+  item.addEventListener('click', () =&gt; {
+    label.textContent = item.dataset.value;
+    wrap.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
+  });
+});</pre>
+
+          <pre class="tab-panel" data-panel="ios">struct EVADropdown: View {
+    let options: [String]
+    @State private var isOpen = false
+    @State private var selected: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            // Тригер
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) { isOpen.toggle() }
+            } label: {
+                HStack(spacing: 8) {
+                    Text(selected ?? "Select")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Color(hex: "212121"))
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "212121"))
+                        // Chevron крутиться 180° при відкритті
+                        .rotationEffect(.degrees(isOpen ? 180 : 0))
+                        .animation(.easeInOut(duration: 0.25), value: isOpen)
+                }
+                .padding(.horizontal, 16)
+                .frame(height: 40)
+                .background(.white)
+                // Рамка товщає при відкритті (1.5 → 2 pt)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(hex: "D8D8D8"), lineWidth: isOpen ? 2 : 1.5)
+                        .animation(.easeInOut(duration: 0.1), value: isOpen)
+                )
+                .cornerRadius(8)
+            }
+            .buttonStyle(.plain)
+
+            // Меню — відкривається через clipShape + opacity
+            if isOpen {
+                VStack(spacing: 0) {
+                    ForEach(Array(options.enumerated()), id: \.offset) { idx, opt in
+                        Button {
+                            selected = opt
+                            withAnimation(.easeInOut(duration: 0.15)) { isOpen = false }
+                        } label: {
+                            HStack { Text(opt).font(.system(size: 16)); Spacer() }
+                            .padding(.horizontal, 12)
+                            .frame(height: 40)
+                            .background(.white)
+                        }
+                        .buttonStyle(.plain)
+                        // Рядки проявляються з невеликим стагером
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                        .animation(
+                            .easeOut(duration: 0.2).delay(Double(idx) * 0.03),
+                            value: isOpen
+                        )
+                    }
+                }
+                .background(.white)
+                .cornerRadius(8)
+                .shadow(color: .black.opacity(0.06), radius: 6, y: 2)
+                .shadow(color: .black.opacity(0.10), radius: 16, y: 4)
+                .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
+            }
+        }
+        .frame(width: 220)
+    }
+}</pre>
+
+          <pre class="tab-panel" data-panel="android">@Composable
+fun EVADropdown(options: List&lt;String&gt;) {
+    var isOpen by remember { mutableStateOf(false) }
+    var selected by remember { mutableStateOf&lt;String?&gt;(null) }
+
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (isOpen) 180f else 0f,
+        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
+        label = "chevron"
+    )
+    val menuAlpha by animateFloatAsState(
+        targetValue = if (isOpen) 1f else 0f,
+        animationSpec = tween(durationMillis = 100),
+        label = "menuAlpha"
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        // Тригер
+        Box(
+            Modifier
+                .width(220.dp)
+                .height(40.dp)
+                .background(Color.White, RoundedCornerShape(8.dp))
+                .border(
+                    // Рамка товщає при відкритті
+                    width = if (isOpen) 2.dp else 1.5.dp,
+                    color = Color(0xFFD8D8D8),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .clickable { isOpen = !isOpen }
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = selected ?: "Select",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF212121)
+                )
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = Color(0xFF212121),
+                    // Chevron обертається 180° при відкритті
+                    modifier = Modifier.rotate(chevronRotation)
+                )
+            }
+        }
+
+        // Меню — AnimatedVisibility з розкриттям зверху вниз
+        AnimatedVisibility(
+            visible = isOpen,
+            enter = expandVertically(
+                animationSpec = tween(250, easing = LinearOutSlowInEasing),
+                expandFrom = Alignment.Top
+            ) + fadeIn(tween(100)),
+            exit  = shrinkVertically(
+                animationSpec = tween(200, easing = FastOutLinearInEasing),
+                shrinkTowards = Alignment.Top
+            ) + fadeOut(tween(80))
+        ) {
+            Card(
+                modifier = Modifier.width(220.dp),
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Column(Modifier.padding(vertical = 8.dp)) {
+                    options.forEachIndexed { idx, opt ->
+                        // Стагер-поява кожного рядка
+                        var visible by remember { mutableStateOf(false) }
+                        LaunchedEffect(isOpen) {
+                            if (isOpen) { delay(50L + idx * 30L); visible = true }
+                            else visible = false
+                        }
+                        AnimatedVisibility(
+                            visible = visible,
+                            enter = fadeIn() + slideInVertically(initialOffsetY = { -it / 4 })
+                        ) {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(40.dp)
+                                    .clickable { selected = opt; isOpen = false }
+                                    .padding(horizontal = 12.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Text(opt, fontSize = 16.sp, color = Color(0xFF212121))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}</pre>
+        </div>
+      </details>
+    </section>
+
     <div class="placeholder-card">Наступна взаємодія — та сама структура: Зараз / Пропозиція / Web / iOS / Android</div>
 
   </div>
@@ -2103,6 +2526,44 @@ fun RangeSlider() {
 
   wireSlider({ sliderId: 'sliderBefore', fillId: 'sliderBeforeFill', minId: 'sliderBeforeMin', maxId: 'sliderBeforeMax', interactive: false });
   wireSlider({ sliderId: 'sliderProposal', fillId: 'sliderFill', minId: 'sliderMin', maxId: 'sliderMax', interactive: true });
+
+  /* ── Dropdown ─────────────────────────────────────────────────────── */
+  function wireDropdown(wrapperId, triggerId, labelId, statusId) {
+    const wrap    = document.getElementById(wrapperId);
+    const trigger = document.getElementById(triggerId);
+    const label   = document.getElementById(labelId);
+    const status  = statusId ? document.getElementById(statusId) : null;
+    if (!wrap || !trigger) return;
+
+    trigger.addEventListener('click', () => {
+      const isOpen = wrap.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', String(isOpen));
+      if (status) status.textContent = isOpen ? 'Список відкрито' : '';
+    });
+
+    // Закрити при кліку поза дропдауном
+    document.addEventListener('click', (e) => {
+      if (!wrap.contains(e.target)) {
+        wrap.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        if (status) status.textContent = '';
+      }
+    });
+
+    // Вибір опції — оновлює лейбл і закриває
+    wrap.querySelectorAll('.dd-item').forEach((item) => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (label) label.textContent = item.dataset.value;
+        wrap.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        if (status) status.textContent = 'Вибрано: ' + item.dataset.value;
+      });
+    });
+  }
+
+  wireDropdown('ddBad',  'ddBadTrigger',  'ddBadLabel',  null);
+  wireDropdown('ddGood', 'ddGoodTrigger', 'ddGoodLabel', 'ddStatus');
 
   /* ---- "Повільний інтернет" toggles: same fill-in animation as the
      proposal checkbox, just local — no request, no loading state ---- */
