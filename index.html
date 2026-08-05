@@ -200,7 +200,7 @@
   .toggle-btn.on:hover:not(.loading) .toggle-outline { stroke: #63A836; }
 
   /* ---------- Dropdown component ---------- */
-  .compare-demo.dd-demo { height: auto; min-height: 216px; align-items: flex-start; padding: 12px 0 16px; }
+  .compare-demo.dd-demo { height: auto; min-height: 80px; align-items: flex-start; justify-content: flex-start; padding: 12px 0 16px; }
   .dd-wrap { position: relative; width: 220px; user-select: none; }
   .dd-trigger {
     display: flex; align-items: center; gap: 8px; height: 40px;
@@ -257,26 +257,6 @@
   .dd-wrap.is-good.open .dd-item:nth-child(3) { transition-delay:110ms,110ms,110ms; }
   .dd-wrap.is-good.open .dd-item:nth-child(4) { transition-delay:140ms,140ms,140ms; }
   .dd-wrap.is-good .dd-item:hover { background: #fafafa; }
-
-  /* States grid — статична таблиця станів як у Figma */
-  .dd-states { display: flex; flex-direction: column; gap: 0; margin-top: 16px; width: 100%; }
-  .dd-state-row { display: flex; align-items: center; gap: 0; }
-  .dd-state-label {
-    font-size: 12px; color: #8a8a84; width: 72px; flex-shrink: 0; text-align: left;
-    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
-  }
-  .dd-static {
-    display: flex; align-items: center; gap: 8px; height: 40px;
-    background: #fff; border: 1.5px solid #d8d8d8; border-radius: 8px;
-    padding: 0 16px; flex: 1;
-    font-family: 'Proxima Nova', -apple-system, 'Helvetica Neue', Arial, sans-serif;
-    font-size: 14px; font-weight: 600; color: #212121;
-  }
-  .dd-static .dd-trigger-label { flex: 1; }
-  .dd-static.is-hover   { background: #ebebeb; }
-  .dd-static.is-expanded { border-width: 2px; }
-  .dd-static.is-disabled { border-color: #ebebeb; color: #bfbfbf; pointer-events: none; }
-  .dd-static.is-disabled svg polyline { stroke: #bfbfbf; }
 
   .dd-menu {
     margin-top: 4px; background: #fff; border-radius: 8px;
@@ -1539,23 +1519,6 @@ fun RangeSlider() {
               </div>
             </div>
           </div>
-          <!-- Статичні стани: тільки Default і Disabled (без ховера/розкриття) -->
-          <div class="dd-states">
-            <div class="dd-state-row">
-              <span class="dd-state-label">Default</span>
-              <div class="dd-static">
-                <span class="dd-trigger-label">Select</span>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="5,7.5 10,12.5 15,7.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-            </div>
-            <div class="dd-state-row">
-              <span class="dd-state-label">Disabled</span>
-              <div class="dd-static is-disabled">
-                <span class="dd-trigger-label">Select</span>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="5,7.5 10,12.5 15,7.5" stroke="#bfbfbf" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- ─── Пропозиція ─── -->
@@ -1574,37 +1537,6 @@ fun RangeSlider() {
                 <div class="dd-item" role="option" data-value="Option 2"><span class="dd-item-text">Option 2</span></div>
                 <div class="dd-item" role="option" data-value="Option 3"><span class="dd-item-text">Option 3</span></div>
                 <div class="dd-item" role="option" data-value="Option 4"><span class="dd-item-text">Option 4</span></div>
-              </div>
-            </div>
-          </div>
-          <!-- Статичні стани: Default / Hover / Expanded / Disabled — як у Figma -->
-          <div class="dd-states">
-            <div class="dd-state-row">
-              <span class="dd-state-label">Default</span>
-              <div class="dd-static">
-                <span class="dd-trigger-label">Select</span>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="5,7.5 10,12.5 15,7.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-            </div>
-            <div class="dd-state-row">
-              <span class="dd-state-label">Hover</span>
-              <div class="dd-static is-hover">
-                <span class="dd-trigger-label">Select</span>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="5,7.5 10,12.5 15,7.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-            </div>
-            <div class="dd-state-row">
-              <span class="dd-state-label">Expanded</span>
-              <div class="dd-static is-expanded">
-                <span class="dd-trigger-label">Select</span>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="5,12.5 10,7.5 15,12.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-            </div>
-            <div class="dd-state-row">
-              <span class="dd-state-label">Disabled</span>
-              <div class="dd-static is-disabled">
-                <span class="dd-trigger-label">Select</span>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="5,7.5 10,12.5 15,7.5" stroke="#bfbfbf" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
             </div>
           </div>
