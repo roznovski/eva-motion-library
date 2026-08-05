@@ -120,13 +120,12 @@
   .wishlist-btn { position: relative; width: 56px; height: 56px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .wishlist-btn svg { transition: transform var(--motion-duration-quick) var(--motion-easing-spring); }
   .wishlist-btn path.outline { transition: stroke var(--motion-duration-fast) var(--motion-easing-standard), opacity var(--motion-duration-base) var(--motion-easing-standard); }
-  .heart-wrap.loading path.outline,
-  .heart-wrap.loading-once path.outline { opacity: 0; }
+  .heart-wrap.loading path.outline { opacity: 0; }
+  /* Швидкий шлях: outline ховається через inline style напряму в JS */
 
   .trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity var(--motion-duration-base) var(--motion-easing-standard); }
-  .heart-wrap.loading .trace-path      { opacity: 1; animation: heart-trace 1.6s infinite; }
-  /* Один прохід контуру — без повтору, зупиняється в кінцевому стані */
-  .heart-wrap.loading-once .trace-path { opacity: 1; animation: heart-trace 1.6s 1 forwards; }
+  .heart-wrap.loading .trace-path { opacity: 1; animation: heart-trace 1.6s infinite; }
+  /* Швидкий шлях: трейс керується через inline-стилі в JS — CSS-клас не потрібен */
   @keyframes heart-trace {
     0% { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
     50% { stroke-dashoffset: 0; animation-timing-function: var(--motion-easing-accelerate); }
@@ -1997,10 +1996,21 @@ fun EVADropdown(options: List&lt;String&gt;) {
       svg.style.transform = 'scale(0.9)';
 
       if (!slowToggle.checked) {
-        // Швидкий шлях: один прохід контуру (1.6с), потім одразу success
-        wrap.classList.add('loading-once');
+        // Швидкий шлях: один прохід контуру — пряме керування через inline-стилі,
+        // щоб уникнути гонки між CSS transition і animation при зміні класів.
         status.textContent = 'Додаємо…';
-        setTimeout(succeed, 1600);
+        outline.style.opacity = '0';          // одразу ховаємо контур без transition
+        trace.style.transition = 'none';      // вимикаємо opacity-transition на трейсі
+        trace.style.opacity = '1';
+        trace.style.animation = 'heart-trace 1.6s 1 forwards';
+        trace.addEventListener('animationend', function onEnd() {
+          trace.removeEventListener('animationend', onEnd);
+          trace.style.animation = '';
+          trace.style.opacity = '0';          // ховаємо трейс одразу після завершення
+          outline.style.opacity = '';         // відновлюємо opacity контуру (керує CSS)
+          trace.style.transition = '';        // відновлюємо transition для наступного разу
+          succeed();
+        });
       } else {
         // Повільний шлях: нескінченний контур поки чекаємо сервер
         wrap.classList.add('loading');
