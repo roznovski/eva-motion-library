@@ -213,6 +213,7 @@
     font-size: 14px; font-weight: 600; color: #212121; outline: none;
     box-shadow: none; appearance: none; text-align: left;
     -webkit-tap-highlight-color: transparent;
+    position: relative; overflow: hidden;
   }
   .dd-trigger-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dd-chevron { flex-shrink: 0; display: block; }
@@ -2555,7 +2556,6 @@ fun EVADropdown(options: List&lt;String&gt;) {
       const ripple = document.createElement('span');
       ripple.className = 'dd-ripple';
       ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
-      trigger.style.overflow = 'hidden';
       trigger.appendChild(ripple);
       ripple.addEventListener('animationend', () => ripple.remove());
     });
