@@ -233,10 +233,21 @@
   /* Hover: фон стає #ebebeb (bg/medium), рамка не змінюється — точно як у Figma */
   .dd-wrap.is-good .dd-trigger:hover:not(:active):not(:disabled) { background: #ebebeb; }
   .dd-wrap.is-good.open .dd-trigger { border-width: 2px; }
-  .dd-wrap.is-good .dd-chevron {
-    transition: transform var(--motion-duration-expand) var(--motion-easing-standard);
+  /* Chevron: миттєва заміна іконки, без обертання */
+  .dd-chevron-up { display: none; }
+  .dd-wrap.open .dd-chevron-down { display: none; }
+  .dd-wrap.open .dd-chevron-up   { display: block; }
+
+  /* Ripple — Material-style коло, що розширюється від точки кліку */
+  .dd-ripple {
+    position: absolute; border-radius: 50%;
+    background: rgba(0,0,0,0.10);
+    transform: scale(0); pointer-events: none;
+    animation: dd-ripple-anim var(--motion-duration-moderate) var(--motion-easing-decelerate) forwards;
   }
-  .dd-wrap.is-good.open .dd-chevron { transform: rotate(180deg); }
+  @keyframes dd-ripple-anim {
+    to { transform: scale(4); opacity: 0; }
+  }
   .dd-wrap.is-good .dd-menu {
     overflow: hidden; max-height: 0; opacity: 0; pointer-events: none;
     transition:
@@ -1512,9 +1523,8 @@ fun RangeSlider() {
             <div class="dd-wrap is-bad" id="ddBad">
               <button class="dd-trigger" id="ddBadTrigger" aria-haspopup="listbox" aria-expanded="false">
                 <span class="dd-trigger-label" id="ddBadLabel">Select</span>
-                <svg class="dd-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <polyline points="5,7.5 10,12.5 15,7.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <svg class="dd-chevron-down" width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="5,7.5 10,12.5 15,7.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg class="dd-chevron-up" width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="5,12.5 10,7.5 15,12.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
               <div class="dd-menu" id="ddBadMenu" role="listbox">
                 <div class="dd-item" role="option" data-value="Option 1"><span class="dd-item-text">Option 1</span><div class="dd-item-check"></div></div>
@@ -1533,9 +1543,8 @@ fun RangeSlider() {
             <div class="dd-wrap is-good" id="ddGood">
               <button class="dd-trigger" id="ddGoodTrigger" aria-haspopup="listbox" aria-expanded="false">
                 <span class="dd-trigger-label" id="ddGoodLabel">Select</span>
-                <svg class="dd-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <polyline points="5,7.5 10,12.5 15,7.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <svg class="dd-chevron-down" width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="5,7.5 10,12.5 15,7.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg class="dd-chevron-up" width="20" height="20" viewBox="0 0 20 20" fill="none"><polyline points="5,12.5 10,7.5 15,12.5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
               <div class="dd-menu" id="ddGoodMenu" role="listbox">
                 <div class="dd-item" role="option" data-value="Option 1"><span class="dd-item-text">Option 1</span><div class="dd-item-check"></div></div>
@@ -2532,10 +2541,23 @@ fun EVADropdown(options: List&lt;String&gt;) {
     const status  = statusId ? document.getElementById(statusId) : null;
     if (!wrap || !trigger) return;
 
-    trigger.addEventListener('click', () => {
+    trigger.addEventListener('click', (e) => {
       const isOpen = wrap.classList.toggle('open');
       trigger.setAttribute('aria-expanded', String(isOpen));
       if (status) status.textContent = isOpen ? 'Список відкрито' : '';
+
+      // Ripple тільки для is-good
+      if (!wrap.classList.contains('is-good')) return;
+      const rect = trigger.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = e.clientX - rect.left - size / 2;
+      const y = e.clientY - rect.top  - size / 2;
+      const ripple = document.createElement('span');
+      ripple.className = 'dd-ripple';
+      ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
+      trigger.style.overflow = 'hidden';
+      trigger.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove());
     });
 
     // Закрити при кліку поза дропдауном
