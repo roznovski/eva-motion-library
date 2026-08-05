@@ -2000,10 +2000,7 @@ fun EVADropdown(options: List&lt;String&gt;) {
         // Швидкий шлях: один прохід контуру (1.6с), потім одразу success
         wrap.classList.add('loading-once');
         status.textContent = 'Додаємо…';
-        trace.addEventListener('animationend', function handler() {
-          trace.removeEventListener('animationend', handler);
-          succeed();
-        });
+        setTimeout(succeed, 1600);
       } else {
         // Повільний шлях: нескінченний контур поки чекаємо сервер
         wrap.classList.add('loading');
