@@ -123,11 +123,20 @@
   .heart-wrap.loading path.outline { opacity: 0; }
 
   .trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity var(--motion-duration-base) var(--motion-easing-standard); }
-  .heart-wrap.loading .trace-path { opacity: 1; animation: heart-trace 1.6s infinite; }
+  .heart-wrap.loading      .trace-path { opacity: 1; animation: heart-trace 1.6s infinite; }
+  .heart-wrap.loading-fast .trace-path { opacity: 1; animation: heart-trace-draw 0.8s 1 forwards; }
+  .heart-wrap.loading-fast path.outline { opacity: 0; }
+
+  /* Повний цикл: малювання + стирання (повільний інтернет) */
   @keyframes heart-trace {
-    0% { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
-    50% { stroke-dashoffset: 0; animation-timing-function: var(--motion-easing-accelerate); }
+    0%   { stroke-dashoffset: var(--len);      animation-timing-function: var(--motion-easing-decelerate); }
+    50%  { stroke-dashoffset: 0;               animation-timing-function: var(--motion-easing-accelerate); }
     100% { stroke-dashoffset: var(--neg-len); }
+  }
+  /* Тільки малювання: зупиняється на повністю промальованому стані (без стирання) */
+  @keyframes heart-trace-draw {
+    0%   { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
+    100% { stroke-dashoffset: 0; }
   }
 
   /* ---------- Checkbox component ---------- */
@@ -1993,13 +2002,18 @@ fun EVADropdown(options: List&lt;String&gt;) {
       wrap.classList.add('loading');
 
       if (!slowToggle.checked) {
-        // Без галочки: контур промальовується рівно один раз (1.6с) → succeed()
-        // Чекаємо перший animationiteration (= кінець першого циклу) і одразу succeed
+        // Без галочки: тільки фаза малювання (0.8с) → одразу succeed(), без стирання
         status.textContent = 'Додаємо…';
-        waitForCycle(trace).then(succeed);
+        wrap.classList.add('loading-fast');
+        trace.addEventListener('animationend', function onDraw() {
+          trace.removeEventListener('animationend', onDraw);
+          wrap.classList.remove('loading-fast');
+          succeed();
+        });
       } else {
-        // З галочкою: нескінченний контур, чекаємо реальну відповідь сервера
+        // З галочкою: повний цикл малювання+стирання, чекаємо сервер
         status.textContent = 'Надсилаємо запит…';
+        wrap.classList.add('loading');
         fakeRequest().then(() => waitForCycle(trace)).then(succeed);
       }
     });
