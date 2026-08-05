@@ -200,7 +200,10 @@
   .toggle-btn.on:hover:not(.loading) .toggle-outline { stroke: #63A836; }
 
   /* ---------- Dropdown component ---------- */
-  .compare-demo.dd-demo { height: auto; min-height: 80px; align-items: flex-start; justify-content: flex-start; padding: 12px 0 16px; }
+  .compare-demo.dd-demo { height: auto; min-height: 80px; align-items: flex-start; justify-content: flex-start; padding: 12px 0 16px; overflow: visible; }
+  /* Дозволяємо абсолютному меню виходити за межі блоку порівняння */
+  .dd-section .compare { overflow: visible; }
+  .dd-section .compare-col { overflow: visible; }
   .dd-wrap { position: relative; width: 220px; user-select: none; }
   .dd-trigger {
     display: flex; align-items: center; gap: 8px; height: 40px;
@@ -266,11 +269,12 @@
   }
   .dd-item {
     display: flex; align-items: center; gap: 12px; height: 40px;
-    padding: 0 12px; cursor: pointer;
+    padding: 0 12px 0 12px; cursor: pointer;
     font-family: 'Proxima Nova', -apple-system, 'Helvetica Neue', Arial, sans-serif;
-    font-size: 16px; font-weight: 400; color: #212121;
+    font-size: 16px; font-weight: 400; color: #212121; white-space: nowrap;
   }
-  .dd-item-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dd-item-icon { width: 20px; height: 20px; flex-shrink: 0; opacity: 0.4; }
+  .dd-item-text { flex: 1; line-height: 24px; overflow: hidden; text-overflow: ellipsis; }
   .dd-item-check { flex-shrink: 0; width: 20px; height: 20px; border: 1.5px solid #d8d8d8; border-radius: 4px; }
 
   /* ---------- Slider component ---------- */
@@ -1494,7 +1498,7 @@ fun RangeSlider() {
     </section>
 
     <!-- ═══════════════ DROPDOWN ═══════════════ -->
-    <section class="interaction">
+    <section class="interaction dd-section">
       <div class="interaction-head">
         <h2>Випадаючий список (dropdown)</h2>
         <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=7302-9347&t=hRdb1Xds5ThByY8a-1" target="_blank" rel="noopener">View in Figma →</a>
@@ -1513,10 +1517,10 @@ fun RangeSlider() {
                 </svg>
               </button>
               <div class="dd-menu" id="ddBadMenu" role="listbox">
-                <div class="dd-item" role="option" data-value="Option 1"><span class="dd-item-text">Option 1</span></div>
-                <div class="dd-item" role="option" data-value="Option 2"><span class="dd-item-text">Option 2</span></div>
-                <div class="dd-item" role="option" data-value="Option 3"><span class="dd-item-text">Option 3</span></div>
-                <div class="dd-item" role="option" data-value="Option 4"><span class="dd-item-text">Option 4</span></div>
+                <div class="dd-item" role="option" data-value="Option 1"><svg class="dd-item-icon" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="11" rx="1.5" stroke="#212121" stroke-width="1.5"/><path d="M2.5 13.5l4-4 3 3 3-4 4.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="dd-item-text">Option 1</span><div class="dd-item-check"></div></div>
+                <div class="dd-item" role="option" data-value="Option 2"><svg class="dd-item-icon" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="11" rx="1.5" stroke="#212121" stroke-width="1.5"/><path d="M2.5 13.5l4-4 3 3 3-4 4.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="dd-item-text">Option 2</span><div class="dd-item-check"></div></div>
+                <div class="dd-item" role="option" data-value="Option 3"><svg class="dd-item-icon" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="11" rx="1.5" stroke="#212121" stroke-width="1.5"/><path d="M2.5 13.5l4-4 3 3 3-4 4.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="dd-item-text">Option 3</span><div class="dd-item-check"></div></div>
+                <div class="dd-item" role="option" data-value="Option 4"><svg class="dd-item-icon" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="11" rx="1.5" stroke="#212121" stroke-width="1.5"/><path d="M2.5 13.5l4-4 3 3 3-4 4.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="dd-item-text">Option 4</span><div class="dd-item-check"></div></div>
               </div>
             </div>
           </div>
@@ -1534,10 +1538,10 @@ fun RangeSlider() {
                 </svg>
               </button>
               <div class="dd-menu" id="ddGoodMenu" role="listbox">
-                <div class="dd-item" role="option" data-value="Option 1"><span class="dd-item-text">Option 1</span></div>
-                <div class="dd-item" role="option" data-value="Option 2"><span class="dd-item-text">Option 2</span></div>
-                <div class="dd-item" role="option" data-value="Option 3"><span class="dd-item-text">Option 3</span></div>
-                <div class="dd-item" role="option" data-value="Option 4"><span class="dd-item-text">Option 4</span></div>
+                <div class="dd-item" role="option" data-value="Option 1"><svg class="dd-item-icon" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="11" rx="1.5" stroke="#212121" stroke-width="1.5"/><path d="M2.5 13.5l4-4 3 3 3-4 4.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="dd-item-text">Option 1</span><div class="dd-item-check"></div></div>
+                <div class="dd-item" role="option" data-value="Option 2"><svg class="dd-item-icon" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="11" rx="1.5" stroke="#212121" stroke-width="1.5"/><path d="M2.5 13.5l4-4 3 3 3-4 4.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="dd-item-text">Option 2</span><div class="dd-item-check"></div></div>
+                <div class="dd-item" role="option" data-value="Option 3"><svg class="dd-item-icon" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="11" rx="1.5" stroke="#212121" stroke-width="1.5"/><path d="M2.5 13.5l4-4 3 3 3-4 4.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="dd-item-text">Option 3</span><div class="dd-item-check"></div></div>
+                <div class="dd-item" role="option" data-value="Option 4"><svg class="dd-item-icon" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="11" rx="1.5" stroke="#212121" stroke-width="1.5"/><path d="M2.5 13.5l4-4 3 3 3-4 4.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="dd-item-text">Option 4</span><div class="dd-item-check"></div></div>
               </div>
             </div>
           </div>
