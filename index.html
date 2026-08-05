@@ -1996,21 +1996,23 @@ fun EVADropdown(options: List&lt;String&gt;) {
       svg.style.transform = 'scale(0.9)';
 
       if (!slowToggle.checked) {
-        // Швидкий шлях: один прохід контуру — пряме керування через inline-стилі,
-        // щоб уникнути гонки між CSS transition і animation при зміні класів.
+        // Швидкий шлях: один прохід контуру → одразу succeed()
         status.textContent = 'Додаємо…';
-        outline.style.opacity = '0';          // одразу ховаємо контур без transition
-        trace.style.transition = 'none';      // вимикаємо opacity-transition на трейсі
+        outline.style.opacity = '0';
+        trace.style.transition = 'none';
         trace.style.opacity = '1';
-        trace.style.animation = 'heart-trace 1.6s 1 forwards';
-        trace.addEventListener('animationend', function onEnd() {
+        trace.style.animation = 'none';       // скидаємо попередній стан
+        void trace.offsetWidth;               // forced reflow — без цього новий animation може не запустись
+        trace.style.animation = 'heart-trace 1.6s 1 forwards var(--motion-easing-decelerate)';
+        function onEnd() {
           trace.removeEventListener('animationend', onEnd);
           trace.style.animation = '';
-          trace.style.opacity = '0';          // ховаємо трейс одразу після завершення
-          outline.style.opacity = '';         // відновлюємо opacity контуру (керує CSS)
-          trace.style.transition = '';        // відновлюємо transition для наступного разу
+          trace.style.opacity = '0';
+          outline.style.opacity = '';
+          trace.style.transition = '';
           succeed();
-        });
+        }
+        trace.addEventListener('animationend', onEnd);
       } else {
         // Повільний шлях: нескінченний контур поки чекаємо сервер
         wrap.classList.add('loading');
