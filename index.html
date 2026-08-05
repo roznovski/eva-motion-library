@@ -120,10 +120,13 @@
   .wishlist-btn { position: relative; width: 56px; height: 56px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .wishlist-btn svg { transition: transform var(--motion-duration-quick) var(--motion-easing-spring); }
   .wishlist-btn path.outline { transition: stroke var(--motion-duration-fast) var(--motion-easing-standard), opacity var(--motion-duration-base) var(--motion-easing-standard); }
-  .heart-wrap.loading path.outline { opacity: 0; }
+  .heart-wrap.loading path.outline,
+  .heart-wrap.loading-once path.outline { opacity: 0; }
 
   .trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity var(--motion-duration-base) var(--motion-easing-standard); }
-  .heart-wrap.loading .trace-path { opacity: 1; animation: heart-trace 1.6s infinite; }
+  .heart-wrap.loading .trace-path      { opacity: 1; animation: heart-trace 1.6s infinite; }
+  /* Один прохід контуру — без повтору, зупиняється в кінцевому стані */
+  .heart-wrap.loading-once .trace-path { opacity: 1; animation: heart-trace 1.6s 1 forwards; }
   @keyframes heart-trace {
     0% { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
     50% { stroke-dashoffset: 0; animation-timing-function: var(--motion-easing-accelerate); }
@@ -1941,9 +1944,8 @@ fun EVADropdown(options: List&lt;String&gt;) {
     });
 
     function fakeRequest() {
-      const slow = slowToggle.checked;
-      const delay = slow ? 2400 + Math.random() * 1200 : 700 + Math.random() * 400;
-      return new Promise((resolve) => setTimeout(resolve, delay));
+      // Повільний режим: 2.4–3.6с, імітує поганий зв'язок
+      return new Promise((resolve) => setTimeout(resolve, 2400 + Math.random() * 1200));
     }
 
     function burst() {
@@ -1958,6 +1960,22 @@ fun EVADropdown(options: List&lt;String&gt;) {
         dot.style.opacity = '0';
         setTimeout(() => dot.remove(), 550);
       }
+    }
+
+    function succeed() {
+      pending = false;
+      active = true;
+      wrap.classList.remove('loading');
+      wrap.classList.remove('loading-once');
+      outline.setAttribute('stroke', '#212121');
+      btn.setAttribute('aria-pressed', 'true');
+      clipCircle.style.transition = 'r .45s cubic-bezier(.34,1.56,.64,1)';
+      clipCircle.setAttribute('r', '14');
+      svg.style.transform = 'scale(1.25)';
+      setTimeout(() => (svg.style.transform = 'scale(1)'), 220);
+      burst();
+      status.textContent = 'Додано в обране';
+      setTimeout(() => { if (status.textContent === 'Додано в обране') status.textContent = ''; }, 1500);
     }
 
     btn.addEventListener('click', () => {
@@ -1977,23 +1995,21 @@ fun EVADropdown(options: List&lt;String&gt;) {
 
       pending = true;
       svg.style.transform = 'scale(0.9)';
-      wrap.classList.add('loading');
-      status.textContent = 'Надсилаємо запит…';
 
-      fakeRequest().then(() => waitForCycle(trace)).then(() => {
-        pending = false;
-        active = true;
-        wrap.classList.remove('loading');
-        outline.setAttribute('stroke', '#212121');
-        btn.setAttribute('aria-pressed', 'true');
-        clipCircle.style.transition = 'r .45s cubic-bezier(.34,1.56,.64,1)';
-        clipCircle.setAttribute('r', '14');
-        svg.style.transform = 'scale(1.25)';
-        setTimeout(() => (svg.style.transform = 'scale(1)'), 220);
-        burst();
-        status.textContent = 'Додано в обране';
-        setTimeout(() => { if (status.textContent === 'Додано в обране') status.textContent = ''; }, 1500);
-      });
+      if (!slowToggle.checked) {
+        // Швидкий шлях: один прохід контуру (1.6с), потім одразу success
+        wrap.classList.add('loading-once');
+        status.textContent = 'Додаємо…';
+        trace.addEventListener('animationend', function handler() {
+          trace.removeEventListener('animationend', handler);
+          succeed();
+        });
+      } else {
+        // Повільний шлях: нескінченний контур поки чекаємо сервер
+        wrap.classList.add('loading');
+        status.textContent = 'Надсилаємо запит…';
+        fakeRequest().then(() => waitForCycle(trace)).then(succeed);
+      }
     });
   })();
 
