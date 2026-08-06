@@ -3892,16 +3892,18 @@ fun BellNotification() {
     let active = true; // за замовчуванням бейдж уже показаний (.is-active у HTML), без анімації входу
 
     function burst() {
-      // Частинки центруються на самому бейджі, не на всій кнопці — як у cart/heart
+      // Частинки центруються на самому бейджі (getBoundingClientRect), не на всій
+      // кнопці — та сама маленька версія, що й у toggle (n=6, dist=14, 3px),
+      // бо бейдж 6.5px ще менший за кульку toggle
       const badgeRect = badge.getBoundingClientRect();
       const wrapRect  = wrap.getBoundingClientRect();
       const cx = badgeRect.left - wrapRect.left + badgeRect.width / 2;
       const cy = badgeRect.top  - wrapRect.top  + badgeRect.height / 2;
-      const n = 8, dist = 18;
+      const n = 6, dist = 14;
       for (let i = 0; i < n; i++) {
         const angle = (i / n) * Math.PI * 2;
         const dot = document.createElement('span');
-        dot.style.cssText = 'position:absolute;width:4px;height:4px;border-radius:50%;background:#F58220;pointer-events:none;opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
+        dot.style.cssText = 'position:absolute;width:3px;height:3px;border-radius:50%;background:#F58220;pointer-events:none;opacity:1;transition:transform .45s cubic-bezier(.2,.8,.3,1), opacity .45s ease-out;';
         dot.style.left = cx + 'px';
         dot.style.top  = cy + 'px';
         dot.style.transform = 'translate(-50%,-50%)';
@@ -3909,7 +3911,7 @@ fun BellNotification() {
         void dot.offsetWidth; // forced reflow — без нього transition не спрацює з першого кліку
         dot.style.transform = 'translate(calc(-50% + ' + Math.cos(angle) * dist + 'px), calc(-50% + ' + Math.sin(angle) * dist + 'px))';
         dot.style.opacity = '0';
-        setTimeout(() => dot.remove(), 550);
+        setTimeout(() => dot.remove(), 480);
       }
     }
 
