@@ -3003,6 +3003,9 @@ fun AddToCartButton(productId: String) {
     check.style.strokeDasharray = checkLen;
     check.style.setProperty('--ci-len', checkLen);
 
+    // Фіксуємо ширину кнопки в дефолтному стані, щоб зміна тексту не змінювала layout
+    document.fonts.ready.then(() => { btn.style.minWidth = btn.offsetWidth + 'px'; });
+
     /* Плавна заміна тексту: зникає → міняється → з'являється */
     function setLabel(text) {
       label.style.opacity = '0';
@@ -3032,8 +3035,8 @@ fun AddToCartButton(productId: String) {
       pending = false;
       inCart = true;
       wrap.classList.remove('loading');  // CSS: spinner ховається, cart-svg з'являється
-      // Галочка промальовується після невеликої затримки (svg встигає сфейдитись)
-      check.style.transition = 'stroke-dashoffset 250ms cubic-bezier(0,0,0,1) 120ms';
+      // Галочка промальовується паралельно з зникненням ліній (40ms overlap → відчуття одної іконки)
+      check.style.transition = 'stroke-dashoffset 200ms cubic-bezier(0,0,0,1) 60ms';
       btn.classList.add('in-cart');  // CSS: bg→#fff, color→#212121, лінії зникають, dashoffset→0
       btn.setAttribute('aria-pressed', 'true');
       setLabel('У кошику');
