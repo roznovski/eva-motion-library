@@ -401,12 +401,14 @@
   .bell-badge { transform-box: fill-box; transform-origin: center; transform: scale(0); }
 
   /* Гойдання дзвіночка: затухаючі коливання навколо верхньої точки (де "підвіс"),
-     як дзвоник, що дзвенить і заспокоюється. Бейдж — окремий елемент поза .bell-shape,
-     тому не крутиться разом з тілом дзвіночка. Крива і таймінги — 1:1 з референсної
-     SMIL-анімації (calcMode="spline"): cubic-bezier(.333,0,.667,1) як базова крива
-     для більшості сегментів, з двома винятками наприкінці циклу на затухання. */
-  .bell-shape { transform-box: fill-box; transform-origin: 50% 0%; }
-  .bell-wrap.is-ringing .bell-shape {
+     як дзвоник, що дзвенить і заспокоюється — безперервно, циклічно, незалежно
+     від стану бейджа (не зупиняється при кліку). Бейдж — окремий елемент поза
+     .bell-shape, тому не крутиться разом з тілом дзвіночка. Крива і таймінги —
+     1:1 з референсної SMIL-анімації (calcMode="spline"): cubic-bezier(.333,0,.667,1)
+     як базова крива для більшості сегментів, з двома винятками наприкінці циклу
+     на затухання. */
+  .bell-shape {
+    transform-box: fill-box; transform-origin: 50% 0%;
     animation: bell-ring 2.333s cubic-bezier(.333,0,.667,1) infinite;
   }
   @keyframes bell-ring {
@@ -3871,12 +3873,10 @@ fun BellNotification() {
     const wrap  = document.getElementById('bellWrap');
     const btn   = document.getElementById('bellBtn');
     const svg   = document.getElementById('bellSvg');
-    const shape = document.getElementById('bellShape');
     const badge = document.getElementById('bellBadge');
     const status = document.getElementById('bellStatus');
     if (!wrap || !btn) return;
     let active = false;
-    let pending = false; // true поки чекаємо завершення поточного циклу гойдання
 
     function burst() {
       // Частинки центруються на самому бейджі, не на всій кнопці — як у cart/heart
@@ -3901,22 +3901,14 @@ fun BellNotification() {
     }
 
     btn.addEventListener('click', () => {
-      if (pending) return;
-
       if (active) {
         active = false;
-        pending = true;
         btn.setAttribute('aria-pressed', 'false');
         badge.style.transition = 'transform 300ms ease-in';
         badge.style.transform  = 'scale(0)';
         svg.style.transform = 'scale(0.85)';
         setTimeout(() => (svg.style.transform = 'scale(1)'), 150);
         status.textContent = '';
-        // Не обриваємо гойдання посеред розмаху — чекаємо кінця поточного циклу
-        waitForCycle(shape).then(() => {
-          wrap.classList.remove('is-ringing');
-          pending = false;
-        });
         return;
       }
 
@@ -3926,7 +3918,6 @@ fun BellNotification() {
       badge.style.transform  = 'scale(1)';
       svg.style.transform = 'scale(1.25)';
       setTimeout(() => (svg.style.transform = 'scale(1)'), 220);
-      wrap.classList.add('is-ringing'); // циклічне гойдання, поки бейдж активний
       burst();
       status.textContent = 'Нове сповіщення';
       setTimeout(() => { if (status.textContent === 'Нове сповіщення') status.textContent = ''; }, 1500);
