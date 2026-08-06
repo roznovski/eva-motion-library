@@ -400,6 +400,28 @@
      що й clip-circle заповнення серця, лише без clip-path (бейдж — просто коло) */
   .bell-badge { transform-box: fill-box; transform-origin: center; transform: scale(0); }
 
+  /* Гойдання дзвіночка: затухаючі коливання навколо верхньої точки (де "підвіс"),
+     як дзвоник, що дзвенить і заспокоюється. Бейдж — окремий елемент поза .bell-shape,
+     тому не крутиться разом з тілом дзвіночка. Крива і таймінги — 1:1 з референсної
+     SMIL-анімації (calcMode="spline"): cubic-bezier(.333,0,.667,1) як базова крива
+     для більшості сегментів, з двома винятками наприкінці циклу на затухання. */
+  .bell-shape { transform-box: fill-box; transform-origin: 50% 0%; }
+  .bell-wrap.is-ringing .bell-shape {
+    animation: bell-ring 2.333s cubic-bezier(.333,0,.667,1) infinite;
+  }
+  @keyframes bell-ring {
+    0%     { transform: rotate(0deg); }
+    7.14%  { transform: rotate(20deg); }
+    14.29% { transform: rotate(-15deg); }
+    21.43% { transform: rotate(10deg); }
+    28.57% { transform: rotate(-8deg); }
+    35.71% { transform: rotate(4deg); }
+    42.86% { transform: rotate(-2deg); }
+    50%    { transform: rotate(1deg); animation-timing-function: cubic-bezier(.167,0,.833,1); }
+    57.14% { transform: rotate(0deg); animation-timing-function: linear; }
+    100%   { transform: rotate(0deg); }
+  }
+
   @media (max-width: 640px) {
     .wrap { padding: 0 16px 56px; }
     .intro { padding: 40px 0 28px; }
@@ -2718,8 +2740,10 @@ fun AddToCartButton(productId: String) {
             <div class="bell-wrap" id="bellWrap">
               <button class="bell-btn" id="bellBtn" aria-pressed="false" aria-label="Сповіщення">
                 <svg id="bellSvg" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M14.857 7.2818C14.857 5.9935 14.3452 4.758 13.4342 3.847C12.5233 2.9361 11.2877 2.4243 9.9995 2.4243C8.7112 2.4243 7.4756 2.9361 6.5647 3.847C5.6537 4.758 5.1419 5.9935 5.1419 7.2818C5.1419 11.5005 3.7961 13.4759 3.1081 14.2102C2.9985 14.3271 3.0878 14.5681 3.248 14.5681H16.7509C16.9111 14.5681 17.0004 14.3271 16.8908 14.2102C16.2029 13.4759 14.857 11.5005 14.857 7.2818Z" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M11.4007 17.3204C11.2584 17.5658 11.0541 17.7695 10.8083 17.9111C10.5625 18.0526 10.2838 18.1272 10.0001 18.1272C9.7165 18.1272 9.4378 18.0526 9.192 17.9111C8.9462 17.7695 8.7419 17.5658 8.5996 17.3204" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <g class="bell-shape" id="bellShape">
+                    <path d="M14.857 7.2818C14.857 5.9935 14.3452 4.758 13.4342 3.847C12.5233 2.9361 11.2877 2.4243 9.9995 2.4243C8.7112 2.4243 7.4756 2.9361 6.5647 3.847C5.6537 4.758 5.1419 5.9935 5.1419 7.2818C5.1419 11.5005 3.7961 13.4759 3.1081 14.2102C2.9985 14.3271 3.0878 14.5681 3.248 14.5681H16.7509C16.9111 14.5681 17.0004 14.3271 16.8908 14.2102C16.2029 13.4759 14.857 11.5005 14.857 7.2818Z" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M11.4007 17.3204C11.2584 17.5658 11.0541 17.7695 10.8083 17.9111C10.5625 18.0526 10.2838 18.1272 10.0001 18.1272C9.7165 18.1272 9.4378 18.0526 9.192 17.9111C8.9462 17.7695 8.7419 17.5658 8.5996 17.3204" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </g>
                   <circle class="bell-badge" id="bellBadge" cx="15" cy="4.166" r="3.25" fill="#F58220"/>
                 </svg>
               </button>
@@ -3847,10 +3871,12 @@ fun BellNotification() {
     const wrap  = document.getElementById('bellWrap');
     const btn   = document.getElementById('bellBtn');
     const svg   = document.getElementById('bellSvg');
+    const shape = document.getElementById('bellShape');
     const badge = document.getElementById('bellBadge');
     const status = document.getElementById('bellStatus');
     if (!wrap || !btn) return;
     let active = false;
+    let pending = false; // true поки чекаємо завершення поточного циклу гойдання
 
     function burst() {
       // Частинки центруються на самому бейджі, не на всій кнопці — як у cart/heart
@@ -3875,14 +3901,22 @@ fun BellNotification() {
     }
 
     btn.addEventListener('click', () => {
+      if (pending) return;
+
       if (active) {
         active = false;
+        pending = true;
         btn.setAttribute('aria-pressed', 'false');
         badge.style.transition = 'transform 300ms ease-in';
         badge.style.transform  = 'scale(0)';
         svg.style.transform = 'scale(0.85)';
         setTimeout(() => (svg.style.transform = 'scale(1)'), 150);
         status.textContent = '';
+        // Не обриваємо гойдання посеред розмаху — чекаємо кінця поточного циклу
+        waitForCycle(shape).then(() => {
+          wrap.classList.remove('is-ringing');
+          pending = false;
+        });
         return;
       }
 
@@ -3892,6 +3926,7 @@ fun BellNotification() {
       badge.style.transform  = 'scale(1)';
       svg.style.transform = 'scale(1.25)';
       setTimeout(() => (svg.style.transform = 'scale(1)'), 220);
+      wrap.classList.add('is-ringing'); // циклічне гойдання, поки бейдж активний
       burst();
       status.textContent = 'Нове сповіщення';
       setTimeout(() => { if (status.textContent === 'Нове сповіщення') status.textContent = ''; }, 1500);
