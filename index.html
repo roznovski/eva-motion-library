@@ -397,8 +397,11 @@
   }
   .bell-btn svg { transition: transform var(--motion-duration-quick) var(--motion-easing-spring); }
   /* Бейдж ховається через scale(0) від власного центру — та сама техніка "поп-ін",
-     що й clip-circle заповнення серця, лише без clip-path (бейдж — просто коло) */
+     що й clip-circle заповнення серця, лише без clip-path (бейдж — просто коло).
+     За замовчуванням активний стан виставлено одразу (.is-active), без анімації
+     входу — як і перший пункт radio за замовчуванням (див. CLAUDE.md) */
   .bell-badge { transform-box: fill-box; transform-origin: center; transform: scale(0); }
+  .bell-badge.is-active { transform: scale(1); }
 
   /* Гойдання дзвіночка: затухаючі коливання навколо верхньої точки (де "підвіс"),
      як дзвоник, що дзвенить і заспокоюється — безперервно, циклічно, незалежно
@@ -2725,11 +2728,11 @@ fun AddToCartButton(productId: String) {
         <div class="compare-col is-bad">
           <span class="compare-tag bad">Зараз</span>
           <div class="compare-demo">
-            <button class="bell-btn" id="bellBefore" aria-pressed="false" aria-label="Сповіщення, без анімації" style="transition:none;">
+            <button class="bell-btn" id="bellBefore" aria-pressed="true" aria-label="Сповіщення, без анімації" style="transition:none;">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M14.857 7.2818C14.857 5.9935 14.3452 4.758 13.4342 3.847C12.5233 2.9361 11.2877 2.4243 9.9995 2.4243C8.7112 2.4243 7.4756 2.9361 6.5647 3.847C5.6537 4.758 5.1419 5.9935 5.1419 7.2818C5.1419 11.5005 3.7961 13.4759 3.1081 14.2102C2.9985 14.3271 3.0878 14.5681 3.248 14.5681H16.7509C16.9111 14.5681 17.0004 14.3271 16.8908 14.2102C16.2029 13.4759 14.857 11.5005 14.857 7.2818Z" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transition:none;"/>
                 <path d="M11.4007 17.3204C11.2584 17.5658 11.0541 17.7695 10.8083 17.9111C10.5625 18.0526 10.2838 18.1272 10.0001 18.1272C9.7165 18.1272 9.4378 18.0526 9.192 17.9111C8.9462 17.7695 8.7419 17.5658 8.5996 17.3204" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transition:none;"/>
-                <circle class="bell-badge-before" cx="15" cy="4.166" r="3.25" fill="#F58220" style="display:none;"/>
+                <circle class="bell-badge-before" cx="15" cy="4.166" r="3.25" fill="#F58220"/>
               </svg>
             </button>
           </div>
@@ -2740,13 +2743,13 @@ fun AddToCartButton(productId: String) {
           <span class="compare-tag good">Пропозиція</span>
           <div class="compare-demo">
             <div class="bell-wrap" id="bellWrap">
-              <button class="bell-btn" id="bellBtn" aria-pressed="false" aria-label="Сповіщення">
+              <button class="bell-btn" id="bellBtn" aria-pressed="true" aria-label="Сповіщення">
                 <svg id="bellSvg" width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <g class="bell-shape" id="bellShape">
                     <path d="M14.857 7.2818C14.857 5.9935 14.3452 4.758 13.4342 3.847C12.5233 2.9361 11.2877 2.4243 9.9995 2.4243C8.7112 2.4243 7.4756 2.9361 6.5647 3.847C5.6537 4.758 5.1419 5.9935 5.1419 7.2818C5.1419 11.5005 3.7961 13.4759 3.1081 14.2102C2.9985 14.3271 3.0878 14.5681 3.248 14.5681H16.7509C16.9111 14.5681 17.0004 14.3271 16.8908 14.2102C16.2029 13.4759 14.857 11.5005 14.857 7.2818Z" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M11.4007 17.3204C11.2584 17.5658 11.0541 17.7695 10.8083 17.9111C10.5625 18.0526 10.2838 18.1272 10.0001 18.1272C9.7165 18.1272 9.4378 18.0526 9.192 17.9111C8.9462 17.7695 8.7419 17.5658 8.5996 17.3204" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                   </g>
-                  <circle class="bell-badge" id="bellBadge" cx="15" cy="4.166" r="3.25" fill="#F58220"/>
+                  <circle class="bell-badge is-active" id="bellBadge" cx="15" cy="4.166" r="3.25" fill="#F58220"/>
                 </svg>
               </button>
             </div>
@@ -3857,7 +3860,7 @@ fun BellNotification() {
     const btn = document.getElementById('bellBefore');
     if (!btn) return;
     const badge = btn.querySelector('.bell-badge-before');
-    let active = false;
+    let active = true; // за замовчуванням бейдж уже показаний, без анімації входу
     btn.addEventListener('click', () => {
       active = !active;
       badge.style.display = active ? 'block' : 'none';
@@ -3876,7 +3879,7 @@ fun BellNotification() {
     const badge = document.getElementById('bellBadge');
     const status = document.getElementById('bellStatus');
     if (!wrap || !btn) return;
-    let active = false;
+    let active = true; // за замовчуванням бейдж уже показаний (.is-active у HTML), без анімації входу
 
     function burst() {
       // Частинки центруються на самому бейджі, не на всій кнопці — як у cart/heart
