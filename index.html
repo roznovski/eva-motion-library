@@ -3547,6 +3547,18 @@ fun BellNotification() {
       }
     }
 
+    function finish(turningOn) {
+      pending = false;
+      on = turningOn;
+      btn.classList.remove('loading');
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-pressed', String(on));
+      clipCircle.style.transition = 'r .3s cubic-bezier(.34,1.56,.64,1)';
+      clipCircle.setAttribute('r', on ? '40' : '0');
+      status.textContent = '';
+      if (on) burst();
+    }
+
     btn.addEventListener('click', () => {
       if (pending) return;
       const turningOn = !on;
@@ -3554,20 +3566,18 @@ fun BellNotification() {
       pending = true;
       svg.style.transform = 'scale(0.95)';
       setTimeout(() => (svg.style.transform = 'scale(1)'), 100);
+
+      if (!slowToggle.checked) {
+        // Оптимістичний UI: без loading-стану й без очікування циклу "дихання" —
+        // та сама логіка, що й у checkbox/radio/cart. Спрайт-анімація переходу
+        // (slide, заливка, burst) лишається — прибираємо тільки штучне очікування.
+        finish(turningOn);
+        return;
+      }
+
       btn.classList.add('loading');
       status.textContent = 'Зберігаємо…';
-
-      fakeRequest().then(() => waitForCycle(knobFill)).then(() => {
-        pending = false;
-        on = turningOn;
-        btn.classList.remove('loading');
-        btn.classList.toggle('on', on);
-        btn.setAttribute('aria-pressed', String(on));
-        clipCircle.style.transition = 'r .3s cubic-bezier(.34,1.56,.64,1)';
-        clipCircle.setAttribute('r', on ? '40' : '0');
-        status.textContent = '';
-        if (on) burst();
-      });
+      fakeRequest().then(() => waitForCycle(knobFill)).then(() => finish(turningOn));
     });
   })();
 
