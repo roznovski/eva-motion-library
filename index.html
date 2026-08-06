@@ -357,11 +357,12 @@
   }
   .cart-icon-slot > * { position: absolute; top: 0; left: 0; display: block; }
 
-  /* Trace SVG — контур кошика, що промальовується по колу */
-  .cart-trace { opacity: 0; pointer-events: none; transition: opacity var(--motion-duration-fast) var(--motion-easing-standard); }
-  .cart-wrap.loading .cart-trace { opacity: 1; }
-  .cart-wrap.loading .cart-trace-path { animation: cart-trace 1.6s linear infinite; }
-  .cart-wrap.loading .cart-svg   { opacity: 0; }
+  /* Spinner: класичний обертовий індикатор — виняток із trace-паттерну
+     на прохання користувача (детальніше в CLAUDE.md заборонено для 20px
+     іконок, але для кошика лишено навмисно, окремо від heart/checkbox/toggle) */
+  .cart-spinner { opacity: 0; pointer-events: none; transform-origin: center; transition: opacity var(--motion-duration-fast) var(--motion-easing-standard); }
+  .cart-wrap.loading .cart-spinner { opacity: 1; animation: cart-spin 0.8s linear infinite; }
+  .cart-wrap.loading .cart-svg     { opacity: 0; }
 
   .cart-svg {
     opacity: 1;
@@ -370,11 +371,7 @@
                 transform var(--motion-duration-moderate) var(--motion-easing-spring);
   }
 
-  @keyframes cart-trace {
-    0%   { stroke-dashoffset: var(--len);     animation-timing-function: var(--motion-easing-decelerate); }
-    50%  { stroke-dashoffset: 0;               animation-timing-function: var(--motion-easing-accelerate); }
-    100% { stroke-dashoffset: var(--neg-len); }
-  }
+  @keyframes cart-spin { to { transform: rotate(360deg); } }
 
   /* Лінії всередині кошика: зникають при переході в стан "У кошику" */
   .ci-line { opacity: 1; }
@@ -2274,7 +2271,10 @@ fun EVADropdown(options: List&lt;String&gt;) {
             <div class="cart-wrap" id="cartWrap">
               <button class="cart-btn is-good" id="cartBtn" aria-pressed="false" aria-label="Додати до кошика">
                 <span class="cart-icon-slot">
-                  <svg class="cart-trace" id="cartTrace" width="20" height="20" viewBox="0 0 20 20" fill="none"></svg>
+                  <svg class="cart-spinner" id="cartSpinner" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="8" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+                    <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="13 39" stroke-linecap="round"/>
+                  </svg>
                   <svg class="cart-svg" id="cartSvg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6"/>
                     <path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8"/>
@@ -2406,15 +2406,15 @@ function succeed() {
     let productId: String
     private var inCart    = false
     private var isLoading = false
-    private var traceStartTime: CFTimeInterval = 0
     private let pressHaptic   = UIImpactFeedbackGenerator(style: .medium)
     private let successHaptic = UINotificationFeedbackGenerator()
 
     private let iconSlot    = UIView()
     private let iconView    = UIImageView()
     private let labelView   = UILabel()
-    // Trace: силует кошика — CAShapeLayer, цикл 1.6s, аналогічний веб-версії
-    private let traceLayer  = CAShapeLayer()
+    // Спінер: класичний обертовий індикатор — трек + дуга, CAShapeLayer
+    private let spinnerTrack = CAShapeLayer()
+    private let spinnerArc   = CAShapeLayer()
     // Checkmark: strokeEnd 0→1 при успіху (одноразово)
     private let checkLayer  = CAShapeLayer()
 
@@ -2442,14 +2442,26 @@ function succeed() {
             withConfiguration: UIImage.SymbolConfiguration(pointSize: 16))?.withRenderingMode(.alwaysTemplate)
         iconSlot.addSubview(iconView)
 
-        // Trace по силуету кошика (handle + body) — той самий контур, що й у веб
-        traceLayer.frame       = iconSlot.bounds
-        traceLayer.path        = cartSilhouettePath()
-        traceLayer.fillColor   = UIColor.clear.cgColor
-        traceLayer.strokeColor = UIColor.white.cgColor
-        traceLayer.lineWidth   = 1.5; traceLayer.lineCap = .round; traceLayer.lineJoin = .round
-        traceLayer.opacity     = 0
-        iconSlot.layer.addSublayer(traceLayer)
+        // Коло r=8 навколо центру 10,10 — той самий радіус, що й у веб-версії
+        let spinnerPath = UIBezierPath(arcCenter: CGPoint(x: 10, y: 10), radius: 8,
+                                        startAngle: 0, endAngle: .pi * 2, clockwise: true).cgPath
+
+        spinnerTrack.frame       = iconSlot.bounds
+        spinnerTrack.path        = spinnerPath
+        spinnerTrack.fillColor   = UIColor.clear.cgColor
+        spinnerTrack.strokeColor = UIColor.white.withAlphaComponent(0.25).cgColor
+        spinnerTrack.lineWidth   = 1.5
+        spinnerTrack.opacity     = 0
+        iconSlot.layer.addSublayer(spinnerTrack)
+
+        spinnerArc.frame       = iconSlot.bounds
+        spinnerArc.path        = spinnerPath
+        spinnerArc.fillColor   = UIColor.clear.cgColor
+        spinnerArc.strokeColor = UIColor.white.cgColor
+        spinnerArc.lineWidth   = 1.5; spinnerArc.lineCap = .round
+        spinnerArc.strokeEnd   = 0.26   // ≈ dasharray "13 39" у веб-версії
+        spinnerArc.opacity     = 0
+        iconSlot.layer.addSublayer(spinnerArc)
 
         // Галочка: прихована, промальовується strokeEnd 0→1 при успіху
         checkLayer.frame       = iconSlot.bounds
@@ -2483,33 +2495,6 @@ function succeed() {
                                    y: bounds.midY)
     }
 
-    // Силует кошика 20×20, startPoint = нижній лівий кут (трейс-конвенція)
-    private func cartSilhouettePath() -&gt; CGPath {
-        let p = UIBezierPath()
-        p.move(to: CGPoint(x: 3, y: 17))
-        p.addLine(to: CGPoint(x: 3.7, y: 15.19))
-        // curves and lines matching web SVG path coordinates exactly
-        p.addCurve(to: CGPoint(x: 5.69, y: 17),
-                   controlPoint1: CGPoint(x: 3.8, y: 16.22),
-                   controlPoint2: CGPoint(x: 4.66, y: 17))
-        p.addLine(to: CGPoint(x: 14.31, y: 17))
-        p.addCurve(to: CGPoint(x: 16.3, y: 15.19),
-                   controlPoint1: CGPoint(x: 15.34, y: 17),
-                   controlPoint2: CGPoint(x: 16.2, y: 16.22))
-        p.addLine(to: CGPoint(x: 17, y: 8))
-        p.addLine(to: CGPoint(x: 13, y: 6))
-        p.addCurve(to: CGPoint(x: 10, y: 3),
-                   controlPoint1: CGPoint(x: 13, y: 4.34),
-                   controlPoint2: CGPoint(x: 11.66, y: 3))
-        p.addCurve(to: CGPoint(x: 7, y: 6),
-                   controlPoint1: CGPoint(x: 8.34, y: 3),
-                   controlPoint2: CGPoint(x: 7, y: 4.34))
-        p.addLine(to: CGPoint(x: 3, y: 8))
-        p.addLine(to: CGPoint(x: 3, y: 17))
-        p.close()
-        return p.cgPath
-    }
-
     // M7.5 11.5 L9.5 13.5 L13.5 9.5 — ті самі координати, що у веб
     private func checkmarkPath() -&gt; CGPath {
         let p = UIBezierPath()
@@ -2519,35 +2504,22 @@ function succeed() {
         return p.cgPath
     }
 
-    private func startTrace() {
-        traceStartTime = CACurrentMediaTime()
-        traceLayer.opacity = 1
+    private func startSpinner() {
+        spinnerTrack.opacity = 1
+        spinnerArc.opacity   = 1
         UIView.animate(withDuration: 0.1) { self.iconView.alpha = 0 }
 
-        let draw = CABasicAnimation(keyPath: "strokeEnd")
-        draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.8
-        draw.timingFunction = CAMediaTimingFunction(controlPoints: 0, 0, 0, 1)
-
-        let erase = CABasicAnimation(keyPath: "strokeStart")
-        erase.fromValue = 0; erase.toValue = 1; erase.beginTime = 0.8; erase.duration = 0.8
-        erase.timingFunction = CAMediaTimingFunction(controlPoints: 0.3, 0, 1, 1)
-
-        let group = CAAnimationGroup()
-        group.animations = [draw, erase]
-        group.duration = 1.6; group.repeatCount = .infinity; group.isRemovedOnCompletion = false
-        traceLayer.add(group, forKey: "cartTrace")
-    }
-
-    private func waitForCycleThenSucceed() {
-        let elapsed   = (CACurrentMediaTime() - traceStartTime).truncatingRemainder(dividingBy: 1.6)
-        let remaining = max(0.05, 1.6 - elapsed)
-        DispatchQueue.main.asyncAfter(deadline: .now() + remaining) { self.succeed() }
+        let rotate = CABasicAnimation(keyPath: "transform.rotation.z")
+        rotate.fromValue = 0; rotate.toValue = CGFloat.pi * 2
+        rotate.duration  = 0.8; rotate.repeatCount = .infinity
+        rotate.timingFunction = CAMediaTimingFunction(name: .linear)
+        spinnerArc.add(rotate, forKey: "cartSpin")
     }
 
     private func succeed() {
         isLoading = false; inCart = true
-        traceLayer.removeAnimation(forKey: "cartTrace")
-        UIView.animate(withDuration: 0.1) { self.traceLayer.opacity = 0 }
+        spinnerArc.removeAnimation(forKey: "cartSpin")
+        spinnerTrack.opacity = 0; spinnerArc.opacity = 0
 
         // Кнопка: bg/border білий, текст темний
         UIView.animate(withDuration: 0.2) {
@@ -2599,12 +2571,12 @@ function succeed() {
         // Оптимістичний UI: без повільного інтернету — одразу succeed()
         // if !slowNetworkEnabled { succeed(); return }
 
-        startTrace()
+        startSpinner()
         setLabel("Додаємо…", color: .white)
 
         Task {
             try? await api.addToCart(productId)
-            await MainActor.run { [weak self] in self?.waitForCycleThenSucceed() }
+            await MainActor.run { [weak self] in self?.succeed() }
         }
     }
 
@@ -3494,7 +3466,6 @@ fun AddToCartButton(productId: String) {
     const label = btn.querySelector('.cart-label');
     const check = btn.querySelector('.ci-check');
     const cartSvg = document.getElementById('cartSvg');
-    const traceSvg = document.getElementById('cartTrace');
     const slowToggle = document.getElementById('slowNetToggleCart');
     const status = document.getElementById('cartStatus');
     let inCart = false;
@@ -3504,40 +3475,6 @@ fun AddToCartButton(productId: String) {
     const checkLen = check.getTotalLength();
     check.style.strokeDasharray = checkLen;
     check.style.strokeDashoffset = checkLen + 2; // +2px буфер проти sub-pixel артефакту
-
-    // ── Будуємо trace-path по силуету кошика ──────────────────────────────
-    // Силует: handle (арка) + body (трапеція) як один замкнений контур
-    const silhouetteD = 'M3 8 L3.7 15.19 C3.8 16.22 4.66 17 5.69 17 H14.31 C15.34 17 16.2 16.22 16.3 15.19 L17 8 L13 6 C13 4.34 11.66 3 10 3 C8.34 3 7 4.34 7 6 Z';
-    const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    probe.setAttribute('d', silhouetteD);
-    document.body.appendChild(probe); // потрібно в DOM для getTotalLength/getPointAtLength
-    const totalLen = probe.getTotalLength();
-    const samples = 140;
-    const pts = [];
-    for (let i = 0; i < samples; i++) pts.push(probe.getPointAtLength((i / samples) * totalLen));
-    document.body.removeChild(probe);
-
-    // Починаємо з найнижчої точки (clockwise) — як heart-trace
-    let bottomIdx = 0;
-    for (let i = 1; i < pts.length; i++) if (pts[i].y > pts[bottomIdx].y) bottomIdx = i;
-    const ordered = [...pts.slice(bottomIdx), ...pts.slice(0, bottomIdx)];
-    const traceD = 'M' + ordered.map(p => p.x.toFixed(2) + ' ' + p.y.toFixed(2)).join(' L') + ' Z';
-
-    const tracePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    tracePath.setAttribute('class', 'cart-trace-path');
-    tracePath.setAttribute('d', traceD);
-    tracePath.setAttribute('fill', 'none');
-    tracePath.setAttribute('stroke', 'currentColor');
-    tracePath.setAttribute('stroke-width', '1.5');
-    tracePath.setAttribute('stroke-linecap', 'round');
-    tracePath.setAttribute('stroke-linejoin', 'round');
-    traceSvg.appendChild(tracePath);
-
-    const traceLen = tracePath.getTotalLength();
-    tracePath.style.strokeDasharray = traceLen;
-    tracePath.style.strokeDashoffset = traceLen; // прихований за замовчуванням
-    tracePath.style.setProperty('--len', traceLen + 'px');
-    tracePath.style.setProperty('--neg-len', (-traceLen) + 'px');
 
     // Фіксуємо ширину кнопки щоб зміна тексту не змінювала layout
     document.fonts.ready.then(() => { btn.style.minWidth = btn.offsetWidth + 'px'; });
@@ -3577,7 +3514,7 @@ fun AddToCartButton(productId: String) {
     function succeed() {
       pending = false;
       inCart = true;
-      wrap.classList.remove('loading'); // trace ховається, cart-svg з'являється
+      wrap.classList.remove('loading'); // спінер ховається, cart-svg з'являється
 
       // Масштабуємо іконку як heart при "додати в обране" (scale 1.25 → 1)
       cartSvg.style.transform = 'scale(1.25)';
@@ -3628,12 +3565,11 @@ fun AddToCartButton(productId: String) {
         return;
       }
 
-      // Стан завантаження: trace-анімація по силуету кошика
+      // Стан завантаження: класичний обертовий спінер
       wrap.classList.add('loading');
       setLabel('Додаємо…');
       status.textContent = 'Додаємо до кошика…';
-      // Чекаємо завершення поточного циклу trace — щоб не переривати посеред малювання
-      fakeRequest().then(() => waitForCycle(tracePath)).then(succeed);
+      fakeRequest().then(succeed);
     });
   })();
 
