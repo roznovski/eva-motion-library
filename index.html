@@ -320,6 +320,46 @@
   .slider.dragging .slider-thumb,
   .slider.dragging .slider-fill { transition: none; }
 
+  /* ---------- Cart button component ---------- */
+  .cart-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+
+  .cart-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 40px; padding: 0 16px;
+    background: #212121; border: 1.5px solid #212121; border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Proxima Nova', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px; font-weight: 600; color: #fff;
+    white-space: nowrap; transition: none;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+
+  .cart-btn.is-good {
+    transition:
+      background-color var(--motion-duration-base) var(--motion-easing-standard),
+      border-color     var(--motion-duration-fast)  var(--motion-easing-standard),
+      color            var(--motion-duration-base)  var(--motion-easing-standard);
+  }
+  .cart-btn.is-good:not(.in-cart):hover { background: #3a3a3a; }
+
+  .cart-btn.in-cart { background: #fff; color: #212121; pointer-events: none; }
+
+  .cart-icon-default { display: block; flex-shrink: 0; }
+  .cart-icon-success { display: none; flex-shrink: 0; }
+  .cart-btn.in-cart .cart-icon-default { display: none; }
+  .cart-btn.in-cart .cart-icon-success { display: block; }
+
+  /* Spinner: shown only during loading, animated rotation */
+  .cart-spinner {
+    display: none; flex-shrink: 0;
+    transform-origin: center;
+    animation: cart-spin 0.8s linear infinite;
+  }
+  .cart-wrap.loading .cart-spinner      { display: block; }
+  .cart-wrap.loading .cart-icon-default { display: none; }
+
+  @keyframes cart-spin { to { transform: rotate(360deg); } }
+
   @media (max-width: 640px) {
     .wrap { padding: 0 16px 56px; }
     .intro { padding: 40px 0 28px; }
@@ -1829,6 +1869,309 @@ fun EVADropdown(options: List&lt;String&gt;) {
       </details>
     </section>
 
+    <!-- ============ Interaction: Add to Cart button ============ -->
+    <section class="interaction">
+      <div class="interaction-head">
+        <h2>Додати до кошика (add to cart)</h2>
+        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=8493-30988" target="_blank" rel="noopener">View in Figma →</a>
+      </div>
+
+      <div class="compare">
+        <!-- ─── Зараз ─── -->
+        <div class="compare-col is-bad">
+          <span class="compare-tag bad">Зараз</span>
+          <div class="compare-demo">
+            <button class="cart-btn" id="cartBefore" aria-pressed="false" aria-label="Додати до кошика, без анімації" style="transition:none;">
+              <svg class="cart-icon-default" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="3" y1="11.5" x2="17" y2="11.5" stroke="white" stroke-width="1.5"/><line x1="3.5" y1="14.5" x2="16" y2="14.5" stroke="white" stroke-width="1.5"/></svg>
+              <svg class="cart-icon-success" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 11.25L9.17 12.92L12.5 9.58" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="cart-label">До кошика</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ─── Пропозиція ─── -->
+        <div class="compare-col is-good">
+          <span class="compare-tag good">Пропозиція</span>
+          <div class="compare-demo">
+            <div class="cart-wrap" id="cartWrap">
+              <button class="cart-btn is-good" id="cartBtn" aria-pressed="false" aria-label="Додати до кошика">
+                <svg class="cart-spinner" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="8" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+                  <circle cx="10" cy="10" r="8" stroke="white" stroke-width="1.5" stroke-dasharray="13 39" stroke-linecap="round"/>
+                </svg>
+                <svg class="cart-icon-default" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="3" y1="11.5" x2="17" y2="11.5" stroke="white" stroke-width="1.5"/><line x1="3.5" y1="14.5" x2="16" y2="14.5" stroke="white" stroke-width="1.5"/></svg>
+                <svg class="cart-icon-success" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 11.25L9.17 12.92L12.5 9.58" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="cart-label">До кошика</span>
+              </button>
+            </div>
+          </div>
+          <p class="status-line" id="cartStatus"></p>
+          <div class="tokens">
+            <span class="token">motion/duration/base</span>
+            <span class="token">motion/easing/standard</span>
+            <span class="token">motion/easing/spring</span>
+          </div>
+          <label class="slow-toggle">
+            <input type="checkbox" id="slowNetToggleCart">
+            <span class="mini-checkbox">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                <path class="outline" fill-rule="evenodd" clip-rule="evenodd" d="M3.77734 2.75H16.2227C16.7899 2.75023 17.2498 3.21006 17.25 3.77734V16.2227C17.2498 16.7899 16.7899 17.2498 16.2227 17.25H3.77734C3.21006 17.2498 2.75023 16.7899 2.75 16.2227V3.77734C2.75023 3.21006 3.21006 2.75023 3.77734 2.75Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <clipPath id="miniClip-4"><circle class="clip-circle" cx="10" cy="10" r="0"/></clipPath>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M16.2227 2C17.2042 2.00023 17.9998 2.79585 18 3.77734V16.2227C17.9998 17.2042 17.2042 17.9998 16.2227 18H3.77734C2.79585 17.9998 2.00023 17.2042 2 16.2227V3.77734C2.00023 2.79585 2.79585 2.00023 3.77734 2H16.2227ZM14.0303 6.80273C13.7374 6.51 13.2626 6.51 12.9697 6.80273L8.83301 10.9385L7.03027 9.13574C6.73745 8.84323 6.26255 8.84323 5.96973 9.13574C5.67693 9.42854 5.67712 9.90337 5.96973 10.1963L8.30273 12.5303C8.44331 12.6708 8.63421 12.7499 8.83301 12.75C9.03177 12.75 9.22266 12.6707 9.36328 12.5303L14.0303 7.86328C14.323 7.57038 14.3231 7.09559 14.0303 6.80273Z" fill="#212121" clip-path="url(#miniClip-4)"/>
+              </svg>
+            </span>
+            Повільний інтернет
+          </label>
+        </div>
+      </div>
+
+      <details class="code-toggle">
+        <summary>Показати код (Web / iOS / Android)</summary>
+        <div class="code-tabs">
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="web">Web</button>
+            <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+            <button class="tab-btn" data-tab="android">Android · Compose</button>
+          </div>
+
+          <pre class="tab-panel active" data-panel="web">&lt;div class="cart-wrap"&gt;
+  &lt;button class="cart-btn" aria-label="Додати до кошика"&gt;
+    &lt;svg class="cart-spinner" width="20" height="20" viewBox="0 0 20 20"&gt;
+      &lt;circle cx="10" cy="10" r="8" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/&gt;
+      &lt;circle cx="10" cy="10" r="8" stroke="white" stroke-width="1.5"
+              stroke-dasharray="13 39" stroke-linecap="round"/&gt;
+    &lt;/svg&gt;
+    &lt;svg class="cart-icon-default" width="20" height="20"&gt;&lt;!-- cart icon paths --&gt;&lt;/svg&gt;
+    &lt;svg class="cart-icon-success" width="20" height="20"&gt;&lt;!-- cart-check icon paths --&gt;&lt;/svg&gt;
+    &lt;span class="cart-label"&gt;До кошика&lt;/span&gt;
+  &lt;/button&gt;
+&lt;/div&gt;
+
+/* Button base: dark bg, white text, no transition by default */
+.cart-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 40px; padding: 0 16px;
+  background: #212121; border: 1.5px solid #212121; border-radius: 8px;
+  font-size: 14px; font-weight: 600; color: #fff;
+  transition:
+    background-color var(--motion-duration-base) var(--motion-easing-standard),
+    border-color     var(--motion-duration-fast)  var(--motion-easing-standard),
+    color            var(--motion-duration-base)  var(--motion-easing-standard);
+}
+
+/* Success state: white bg, visible border, dark text */
+.cart-btn.in-cart { background: #fff; color: #212121; pointer-events: none; }
+
+/* Icon swap — instant, as bg transitions beneath */
+.cart-icon-success { display: none; }
+.cart-btn.in-cart .cart-icon-default { display: none; }
+.cart-btn.in-cart .cart-icon-success { display: block; }
+
+/* Spinner: shown only while loading */
+.cart-spinner {
+  display: none; transform-origin: center;
+  animation: cart-spin 0.8s linear infinite;
+}
+.cart-wrap.loading .cart-spinner      { display: block; }
+.cart-wrap.loading .cart-icon-default { display: none; }
+@keyframes cart-spin { to { transform: rotate(360deg); } }
+
+/* ---------------------------------------------------------- */
+
+function burst(wrap) {
+  const n = 8, dist = 22;
+  for (let i = 0; i &lt; n; i++) {
+    const angle = (i / n) * Math.PI * 2;
+    const dot = document.createElement('span');
+    dot.style.cssText = 'position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#76BF44;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
+    wrap.appendChild(dot);
+    void dot.offsetWidth;         // forced reflow — без нього transition не спрацьовує з першого кліку
+    dot.style.transform = 'translate(calc(-50% + ' + Math.cos(angle) * dist + 'px), calc(-50% + ' + Math.sin(angle) * dist + 'px))';
+    dot.style.opacity = '0';
+    setTimeout(() =&gt; dot.remove(), 550);
+  }
+}
+
+btn.addEventListener('click', () =&gt; {
+  if (pending || inCart) return;
+
+  pending = true;
+  btn.style.transform = 'scale(0.97)';     // press-фідбек, &lt;100ms
+  setTimeout(() =&gt; (btn.style.transform = 'scale(1)'), 100);
+
+  if (!slowToggle.checked) {
+    succeed(); return;                       // оптимістичний UI — без стану завантаження
+  }
+
+  wrap.classList.add('loading');
+  status.textContent = 'Додаємо до кошика…';
+  api.addToCart(productId).then(() =&gt; {      // реальний виклик
+    wrap.classList.remove('loading');
+    succeed();
+  });
+});
+
+function succeed() {
+  pending = false; inCart = true;
+  btn.classList.add('in-cart');             // запускає CSS-transition bg + color
+  label.textContent = 'У кошику';
+  btn.style.transform = 'scale(1.04)';     // spring-bounce при успіху
+  setTimeout(() =&gt; (btn.style.transform = 'scale(1)'), 150);
+  burst(wrap);                             // 8 зелених частинок
+}</pre>
+
+          <pre class="tab-panel" data-panel="ios">struct AddToCartButton: View {
+    let productId: String
+    @State private var inCart = false
+    @State private var isLoading = false
+    @State private var scale: CGFloat = 1
+
+    let pressHaptic = UIImpactFeedbackGenerator(style: .medium)
+    let successHaptic = UINotificationFeedbackGenerator()
+
+    var body: some View {
+        Button { handleTap() } label: {
+            HStack(spacing: 8) {
+                if isLoading {
+                    // Дуга, що обертається — замість іконки під час очікування
+                    Circle()
+                        .trim(from: 0, to: 0.25)
+                        .stroke(Color.white, lineWidth: 1.5)
+                        .frame(width: 20, height: 20)
+                        .rotationEffect(.degrees(isLoading ? 360 : 0))
+                        .animation(
+                            .linear(duration: 0.8).repeatForever(autoreverses: false),
+                            value: isLoading
+                        )
+                } else {
+                    Image(systemName: inCart ? "cart.badge.checkmark" : "cart")
+                        .font(.system(size: 16))
+                }
+                Text(inCart ? "У кошику" : "До кошика")
+                    .font(.system(size: 14, weight: .semibold))
+            }
+            .foregroundColor(inCart ? Color(hex: "212121") : .white)
+            .frame(height: 40)
+            .padding(.horizontal, 16)
+            // Фон і обведення переходять через withAnimation нижче
+            .background(inCart ? Color.white : Color(hex: "212121"))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color(hex: "212121"), lineWidth: 1.5)
+            )
+            .cornerRadius(8)
+            .scaleEffect(scale)
+        }
+        .buttonStyle(.plain)
+        .disabled(inCart)
+    }
+
+    func handleTap() {
+        pressHaptic.impactOccurred()
+        withAnimation(.easeOut(duration: 0.1)) { scale = 0.97 }
+        withAnimation(.easeOut(duration: 0.1).delay(0.1)) { scale = 1 }
+        isLoading = true
+
+        Task {
+            try? await api.addToCart(productId)     // реальний виклик
+            await MainActor.run {
+                isLoading = false
+                successHaptic.notificationOccurred(.success)
+                // Анімує зміну фону й тексту разом зі spring-bounce
+                withAnimation(.easeInOut(duration: 0.2)) { inCart = true }
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.65)) {
+                    scale = 1.04
+                }
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.65).delay(0.15)) {
+                    scale = 1
+                }
+            }
+        }
+    }
+}</pre>
+
+          <pre class="tab-panel" data-panel="android">@Composable
+fun AddToCartButton(productId: String) {
+    var inCart by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    val scale = remember { Animatable(1f) }
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+
+    // Плавна зміна кольорів при переході в стан "У кошику"
+    val bgColor by animateColorAsState(
+        targetValue = if (inCart) Color.White else Color(0xFF212121),
+        animationSpec = tween(durationMillis = 200),
+        label = "cartBg"
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (inCart) Color(0xFF212121) else Color.White,
+        animationSpec = tween(durationMillis = 200),
+        label = "cartContent"
+    )
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .height(40.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(bgColor)
+            .border(1.5.dp, Color(0xFF212121), RoundedCornerShape(8.dp))
+            .scale(scale.value)
+            .clickable(
+                enabled = !inCart,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                scope.launch {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    scale.animateTo(0.97f, tween(100))       // press-фідбек
+
+                    isLoading = true
+                    api.addToCart(productId)                  // реальний виклик
+                    isLoading = false
+                    inCart = true                             // запускає animateColorAsState
+
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    scale.animateTo(                          // spring-bounce при успіху
+                        1.04f,
+                        spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium)
+                    )
+                    scale.animateTo(1f, tween(150))
+                }
+            }
+            .padding(horizontal = 16.dp)
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                color = Color.White,
+                strokeWidth = 1.5.dp,
+                modifier = Modifier.size(20.dp)
+            )
+        } else {
+            Icon(
+                imageVector = if (inCart)
+                    Icons.Outlined.ShoppingCartCheckout
+                else
+                    Icons.Outlined.ShoppingCart,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Text(
+            text = if (inCart) "У кошику" else "До кошика",
+            color = contentColor,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}</pre>
+        </div>
+      </details>
+    </section>
+
     <div class="placeholder-card">Наступна взаємодія — та сама структура: Зараз / Пропозиція / Web / iOS / Android</div>
 
   </div>
@@ -2585,6 +2928,86 @@ fun EVADropdown(options: List&lt;String&gt;) {
 
   wireDropdown('ddBad',  'ddBadTrigger',  'ddBadLabel',  null);
   wireDropdown('ddGood', 'ddGoodTrigger', 'ddGoodLabel', 'ddStatus');
+
+  /* ── Cart button ─────────────────────────────────────────────────── */
+  (function wireBeforeCart() {
+    const btn = document.getElementById('cartBefore');
+    if (!btn) return;
+    const label = btn.querySelector('.cart-label');
+    let pending = false;
+
+    btn.addEventListener('click', () => {
+      if (pending || btn.classList.contains('in-cart')) return;
+      pending = true;
+      // та сама пауза 800мс без жодного фідбека, потім різкий стрибок у фінальний стан
+      setTimeout(() => {
+        pending = false;
+        btn.classList.add('in-cart');
+        label.textContent = 'У кошику';
+      }, 800);
+    });
+  })();
+
+  (function wireProposalCart() {
+    const wrap = document.getElementById('cartWrap');
+    const btn = document.getElementById('cartBtn');
+    if (!wrap || !btn) return;
+    const label = btn.querySelector('.cart-label');
+    const slowToggle = document.getElementById('slowNetToggleCart');
+    const status = document.getElementById('cartStatus');
+    let inCart = false;
+    let pending = false;
+
+    function fakeRequest() {
+      const delay = slowToggle.checked ? 2200 + Math.random() * 1200 : 250 + Math.random() * 250;
+      return new Promise((resolve) => setTimeout(resolve, delay));
+    }
+
+    function burst() {
+      const n = 8, dist = 22;
+      for (let i = 0; i < n; i++) {
+        const angle = (i / n) * Math.PI * 2;
+        const dot = document.createElement('span');
+        dot.style.cssText = 'position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#76BF44;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
+        wrap.appendChild(dot);
+        void dot.offsetWidth; // forced reflow — той самий фікс, що й скрізь
+        dot.style.transform = 'translate(calc(-50% + ' + Math.cos(angle) * dist + 'px), calc(-50% + ' + Math.sin(angle) * dist + 'px))';
+        dot.style.opacity = '0';
+        setTimeout(() => dot.remove(), 550);
+      }
+    }
+
+    function succeed() {
+      pending = false;
+      inCart = true;
+      wrap.classList.remove('loading');
+      btn.classList.add('in-cart');  // запускає CSS-transition bg + color
+      btn.setAttribute('aria-pressed', 'true');
+      label.textContent = 'У кошику';
+      btn.style.transform = 'scale(1.04)';
+      setTimeout(() => (btn.style.transform = 'scale(1)'), 150);
+      burst();
+      status.textContent = 'Додано до кошика';
+      setTimeout(() => { if (status.textContent === 'Додано до кошика') status.textContent = ''; }, 1500);
+    }
+
+    btn.addEventListener('click', () => {
+      if (pending || inCart) return;
+
+      pending = true;
+      btn.style.transform = 'scale(0.97)'; // press-фідбек, <100ms
+      setTimeout(() => (btn.style.transform = 'scale(1)'), 100);
+
+      if (!slowToggle.checked) {
+        succeed(); // оптимістичний UI: без стану завантаження
+        return;
+      }
+
+      wrap.classList.add('loading');
+      status.textContent = 'Додаємо до кошика…';
+      fakeRequest().then(succeed);
+    });
+  })();
 
   /* ---- "Повільний інтернет" toggles: same fill-in animation as the
      proposal checkbox, just local — no request, no loading state ---- */
