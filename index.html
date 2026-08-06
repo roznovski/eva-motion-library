@@ -1931,7 +1931,7 @@ fun EVADropdown(options: List&lt;String&gt;) {
                     <path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8"/>
                     <line class="ci-line" x1="3" y1="11.5" x2="17" y2="11.5"/>
                     <line class="ci-line" x1="3.5" y1="14.5" x2="16" y2="14.5"/>
-                    <path class="ci-check" d="M6.97 11.78L9.17 12.77L13.03 9.58"/>
+                    <path class="ci-check" d="M7.5 11.5L9.5 13.5L13.5 9.5"/>
                   </svg>
                 </span>
                 <span class="cart-label">До кошика</span>
@@ -3019,11 +3019,11 @@ fun AddToCartButton(productId: String) {
     }
 
     function burst() {
-      const n = 8, dist = 22;
+      const n = 8, dist = 26;
       for (let i = 0; i < n; i++) {
         const angle = (i / n) * Math.PI * 2;
         const dot = document.createElement('span');
-        dot.style.cssText = 'position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#76BF44;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
+        dot.style.cssText = 'position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#212121;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
         wrap.appendChild(dot);
         void dot.offsetWidth;
         dot.style.transform = 'translate(calc(-50% + ' + Math.cos(angle) * dist + 'px), calc(-50% + ' + Math.sin(angle) * dist + 'px))';
