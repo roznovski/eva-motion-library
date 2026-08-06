@@ -3019,11 +3019,19 @@ fun AddToCartButton(productId: String) {
     }
 
     function burst() {
+      // Центруємо на іконці, а не на всій кнопці
+      const slotRect = btn.querySelector('.cart-icon-slot').getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      const cx = slotRect.left - wrapRect.left + slotRect.width / 2;
+      const cy = slotRect.top  - wrapRect.top  + slotRect.height / 2;
       const n = 8, dist = 26;
       for (let i = 0; i < n; i++) {
         const angle = (i / n) * Math.PI * 2;
         const dot = document.createElement('span');
-        dot.style.cssText = 'position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#212121;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
+        dot.style.cssText = 'position:absolute;width:4px;height:4px;border-radius:50%;background:#212121;pointer-events:none;opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
+        dot.style.left = cx + 'px';
+        dot.style.top  = cy + 'px';
+        dot.style.transform = 'translate(-50%,-50%)';
         wrap.appendChild(dot);
         void dot.offsetWidth;
         dot.style.transform = 'translate(calc(-50% + ' + Math.cos(angle) * dist + 'px), calc(-50% + ' + Math.sin(angle) * dist + 'px))';
