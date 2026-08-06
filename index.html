@@ -359,7 +359,8 @@
 
   /* Trace SVG — контур кошика, що промальовується по колу */
   .cart-trace { opacity: 0; pointer-events: none; transition: opacity var(--motion-duration-fast) var(--motion-easing-standard); }
-  .cart-wrap.loading .cart-trace { opacity: 1; animation: cart-trace 1.6s linear infinite; }
+  .cart-wrap.loading .cart-trace { opacity: 1; }
+  .cart-wrap.loading .cart-trace-path { animation: cart-trace 1.6s linear infinite; }
   .cart-wrap.loading .cart-svg   { opacity: 0; }
 
   .cart-svg {
@@ -3523,6 +3524,7 @@ fun AddToCartButton(productId: String) {
     const traceD = 'M' + ordered.map(p => p.x.toFixed(2) + ' ' + p.y.toFixed(2)).join(' L') + ' Z';
 
     const tracePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    tracePath.setAttribute('class', 'cart-trace-path');
     tracePath.setAttribute('d', traceD);
     tracePath.setAttribute('fill', 'none');
     tracePath.setAttribute('stroke', 'currentColor');
@@ -3534,8 +3536,8 @@ fun AddToCartButton(productId: String) {
     const traceLen = tracePath.getTotalLength();
     tracePath.style.strokeDasharray = traceLen;
     tracePath.style.strokeDashoffset = traceLen; // прихований за замовчуванням
-    traceSvg.style.setProperty('--len', traceLen + 'px');
-    traceSvg.style.setProperty('--neg-len', (-traceLen) + 'px');
+    tracePath.style.setProperty('--len', traceLen + 'px');
+    tracePath.style.setProperty('--neg-len', (-traceLen) + 'px');
 
     // Фіксуємо ширину кнопки щоб зміна тексту не змінювала layout
     document.fonts.ready.then(() => { btn.style.minWidth = btn.offsetWidth + 'px'; });
