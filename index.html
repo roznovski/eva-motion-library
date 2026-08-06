@@ -388,6 +388,18 @@
     transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
   }
 
+  /* ---------- Bell notification component ---------- */
+  .bell-wrap { position: relative; display: inline-flex; }
+  .bell-btn {
+    width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+    border: none; background: transparent; cursor: pointer; padding: 0;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .bell-btn svg { transition: transform var(--motion-duration-quick) var(--motion-easing-spring); }
+  /* Бейдж ховається через scale(0) від власного центру — та сама техніка "поп-ін",
+     що й clip-circle заповнення серця, лише без clip-path (бейдж — просто коло) */
+  .bell-badge { transform-box: fill-box; transform-origin: center; transform: scale(0); }
+
   @media (max-width: 640px) {
     .wrap { padding: 0 16px 56px; }
     .intro { padding: 40px 0 28px; }
@@ -2677,6 +2689,247 @@ fun AddToCartButton(productId: String) {
       </details>
     </section>
 
+    <!-- ============ Interaction: Bell notification ============ -->
+    <section class="interaction">
+      <div class="interaction-head">
+        <h2>Сповіщення (bell)</h2>
+        <a class="figma-link" href="https://www.figma.com/design/C0r59vXV6zR5jn84FN3sun/EVA-%E2%80%A2-Foundation-Library?node-id=495-25&t=bxw1f3mHY5c4Lzc8-1" target="_blank" rel="noopener">View in Figma →</a>
+      </div>
+
+      <div class="compare">
+        <!-- ─── Зараз ─── -->
+        <div class="compare-col is-bad">
+          <span class="compare-tag bad">Зараз</span>
+          <div class="compare-demo">
+            <button class="bell-btn" id="bellBefore" aria-pressed="false" aria-label="Сповіщення, без анімації" style="transition:none;">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M14.857 7.2818C14.857 5.9935 14.3452 4.758 13.4342 3.847C12.5233 2.9361 11.2877 2.4243 9.9995 2.4243C8.7112 2.4243 7.4756 2.9361 6.5647 3.847C5.6537 4.758 5.1419 5.9935 5.1419 7.2818C5.1419 11.5005 3.7961 13.4759 3.1081 14.2102C2.9985 14.3271 3.0878 14.5681 3.248 14.5681H16.7509C16.9111 14.5681 17.0004 14.3271 16.8908 14.2102C16.2029 13.4759 14.857 11.5005 14.857 7.2818Z" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transition:none;"/>
+                <path d="M11.4007 17.3204C11.2584 17.5658 11.0541 17.7695 10.8083 17.9111C10.5625 18.0526 10.2838 18.1272 10.0001 18.1272C9.7165 18.1272 9.4378 18.0526 9.192 17.9111C8.9462 17.7695 8.7419 17.5658 8.5996 17.3204" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transition:none;"/>
+                <circle class="bell-badge-before" cx="15" cy="4.166" r="3.25" fill="#F58220" style="display:none;"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ─── Пропозиція ─── -->
+        <div class="compare-col is-good">
+          <span class="compare-tag good">Пропозиція</span>
+          <div class="compare-demo">
+            <div class="bell-wrap" id="bellWrap">
+              <button class="bell-btn" id="bellBtn" aria-pressed="false" aria-label="Сповіщення">
+                <svg id="bellSvg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M14.857 7.2818C14.857 5.9935 14.3452 4.758 13.4342 3.847C12.5233 2.9361 11.2877 2.4243 9.9995 2.4243C8.7112 2.4243 7.4756 2.9361 6.5647 3.847C5.6537 4.758 5.1419 5.9935 5.1419 7.2818C5.1419 11.5005 3.7961 13.4759 3.1081 14.2102C2.9985 14.3271 3.0878 14.5681 3.248 14.5681H16.7509C16.9111 14.5681 17.0004 14.3271 16.8908 14.2102C16.2029 13.4759 14.857 11.5005 14.857 7.2818Z" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M11.4007 17.3204C11.2584 17.5658 11.0541 17.7695 10.8083 17.9111C10.5625 18.0526 10.2838 18.1272 10.0001 18.1272C9.7165 18.1272 9.4378 18.0526 9.192 17.9111C8.9462 17.7695 8.7419 17.5658 8.5996 17.3204" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle class="bell-badge" id="bellBadge" cx="15" cy="4.166" r="3.25" fill="#F58220"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <p class="status-line" id="bellStatus"></p>
+          <div class="tokens">
+            <span class="token">--motion-easing-spring</span>
+            <span class="token">--motion-duration-quick</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="code-toggle">
+        <summary>Показати код (Web / iOS / Android)</summary>
+        <div class="code-tabs">
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="web">Web</button>
+            <button class="tab-btn" data-tab="ios">iOS · UIKit</button>
+            <button class="tab-btn" data-tab="android">Android · Compose</button>
+          </div>
+
+          <pre class="tab-panel active" data-panel="web">&lt;div class="bell-wrap"&gt;
+  &lt;button class="bell-btn" aria-label="Сповіщення"&gt;
+    &lt;svg id="bellSvg" width="20" height="20" viewBox="0 0 20 20" fill="none"&gt;
+      &lt;path d="M14.857 7.2818...Z" stroke="#212121" stroke-width="1.5"/&gt;
+      &lt;path d="M11.4007 17.3204...(clapper)" stroke="#212121" stroke-width="1.5"/&gt;
+      &lt;circle class="bell-badge" id="bellBadge" cx="15" cy="4.166" r="3.25" fill="#F58220"/&gt;
+    &lt;/svg&gt;
+  &lt;/button&gt;
+&lt;/div&gt;
+
+/* Іконка пружинить при кожній зміні стану */
+.bell-btn svg {
+  transition: transform var(--motion-duration-quick) var(--motion-easing-spring);
+}
+/* Бейдж прихований через scale(0) від власного центру (fill-box) */
+.bell-badge { transform-box: fill-box; transform-origin: center; transform: scale(0); }
+
+let active = false;
+btn.addEventListener('click', () =&gt; {
+  if (active) {
+    // Повернення в default: коротке "стиснення" іконки, бейдж швидко ховається, без burst
+    active = false;
+    btn.setAttribute('aria-pressed', 'false');
+    badge.style.transition = 'transform 300ms ease-in';
+    badge.style.transform  = 'scale(0)';
+    svg.style.transform = 'scale(0.85)';
+    setTimeout(() =&gt; (svg.style.transform = 'scale(1)'), 150);
+    return;
+  }
+
+  active = true;
+  btn.setAttribute('aria-pressed', 'true');
+  // Бейдж "виринає" spring-easing — та сама крива, що й clip-circle серця
+  badge.style.transition = 'transform 450ms cubic-bezier(.34,1.56,.64,1)';
+  badge.style.transform  = 'scale(1)';
+  svg.style.transform = 'scale(1.25)';
+  setTimeout(() =&gt; (svg.style.transform = 'scale(1)'), 220);
+  burst(); // частинки навколо бейджа, той самий прийом, що й у cart/heart
+});
+
+function burst() {
+  // Центруємо частинки на самому бейджі (getBoundingClientRect), не на всій кнопці
+  const badgeRect = badge.getBoundingClientRect();
+  const wrapRect  = wrap.getBoundingClientRect();
+  const cx = badgeRect.left - wrapRect.left + badgeRect.width / 2;
+  const cy = badgeRect.top  - wrapRect.top  + badgeRect.height / 2;
+  const n = 8, dist = 18;
+  for (let i = 0; i &lt; n; i++) {
+    const angle = (i / n) * Math.PI * 2;
+    const dot = document.createElement('span');
+    dot.style.cssText = 'position:absolute;width:4px;height:4px;border-radius:50%;background:#F58220;pointer-events:none;opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
+    dot.style.left = cx + 'px';
+    dot.style.top  = cy + 'px';
+    dot.style.transform = 'translate(-50%,-50%)';
+    wrap.appendChild(dot);
+    void dot.offsetWidth; // forced reflow — без нього transition не спрацює з першого кліку
+    dot.style.transform = 'translate(calc(-50% + ' + Math.cos(angle) * dist + 'px), calc(-50% + ' + Math.sin(angle) * dist + 'px))';
+    dot.style.opacity = '0';
+    setTimeout(() =&gt; dot.remove(), 550);
+  }
+}</pre>
+
+          <pre class="tab-panel" data-panel="ios">final class BellNotificationView: UIView {
+    private var hasBadge = false
+    private let pressHaptic   = UIImpactFeedbackGenerator(style: .medium)
+    private let successHaptic = UINotificationFeedbackGenerator()
+
+    private let iconView = UIImageView()
+    private let badgeView = UIView()
+
+    override init(frame: CGRect) { super.init(frame: frame); setup() }
+    required init?(coder: NSCoder) { super.init(coder: coder); setup() }
+
+    private func setup() {
+        frame.size = CGSize(width: 44, height: 44)
+
+        iconView.image = UIImage(systemName: "bell")?
+            .withRenderingMode(.alwaysTemplate)
+        iconView.tintColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+        iconView.frame = bounds
+        iconView.contentMode = .center
+        addSubview(iconView)
+
+        // Бейдж: маленьке коло 6.5pt, приховане через scale(0) від власного центру
+        badgeView.frame = CGRect(x: 27, y: 8, width: 6.5, height: 6.5)
+        badgeView.backgroundColor = UIColor(red: 0.96, green: 0.51, blue: 0.13, alpha: 1) // #F58220
+        badgeView.layer.cornerRadius = 3.25
+        badgeView.transform = CGAffineTransform(scaleX: 0, y: 0)
+        addSubview(badgeView)
+
+        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap)))
+    }
+
+    @objc private func handleTap() {
+        if hasBadge {
+            hasBadge = false
+            UIView.animate(withDuration: 0.3, options: .curveEaseIn) {
+                self.badgeView.transform = CGAffineTransform(scaleX: 0, y: 0)
+            }
+            UIView.animate(withDuration: 0.15) {
+                self.iconView.transform = CGAffineTransform(scaleX: 0.85, y: 0.85)
+            } completion: { _ in
+                UIView.animate(withDuration: 0.15) { self.iconView.transform = .identity }
+            }
+            return
+        }
+
+        hasBadge = true
+        pressHaptic.impactOccurred()
+        // Бейдж виринає spring-фізикою — той самий damping, що й лайк серця
+        UIView.animate(withDuration: 0.45, delay: 0,
+                       usingSpringWithDamping: 0.55, initialSpringVelocity: 0, options: []) {
+            self.badgeView.transform = .identity
+        }
+        UIView.animate(withDuration: 0.3, delay: 0,
+                       usingSpringWithDamping: 0.55, initialSpringVelocity: 0, options: []) {
+            self.iconView.transform = CGAffineTransform(scaleX: 1.25, y: 1.25)
+        } completion: { _ in
+            UIView.animate(withDuration: 0.22) { self.iconView.transform = .identity }
+        }
+        successHaptic.notificationOccurred(.success)
+        // Партикл-burst — навмисно web-only прийом (як і в heart/toggle), тут
+        // достатньо spring-bounce + haptic для відчуття "успіху"
+    }
+}</pre>
+
+          <pre class="tab-panel" data-panel="android">@Composable
+fun BellNotification() {
+    var hasBadge by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+
+    val iconScale = remember { Animatable(1f) }
+    val badgeScale by animateFloatAsState(
+        targetValue = if (hasBadge) 1f else 0f,
+        animationSpec = if (hasBadge)
+            spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium) // виринання
+        else
+            tween(300, easing = FastOutLinearInEasing),                    // швидке ховання
+        label = "badgeScale"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                scope.launch {
+                    if (hasBadge) {
+                        hasBadge = false
+                        iconScale.animateTo(0.85f, tween(150))
+                        iconScale.animateTo(1f, tween(150))
+                    } else {
+                        hasBadge = true
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        // Spring-bounce 1.25→1 — та сама фізика, що й лайк серця
+                        iconScale.animateTo(1.25f, spring(Spring.DampingRatioMediumBouncy))
+                        iconScale.animateTo(1f, tween(220))
+                    }
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Notifications,
+            contentDescription = "Сповіщення",
+            tint = Color(0xFF212121),
+            modifier = Modifier.scale(iconScale.value)
+        )
+        if (badgeScale &gt; 0f) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-4).dp, y = 4.dp)
+                    .size(6.5.dp)
+                    .scale(badgeScale)
+                    .background(Color(0xFFF58220), CircleShape)
+            )
+        }
+        // Партикл-burst — web-only прийом, як і в heart/toggle;
+        // тут відчуття "успіху" дає spring-bounce + haptic feedback
+    }
+}</pre>
+        </div>
+      </details>
+    </section>
+
     <div class="placeholder-card">Наступна взаємодія — та сама структура: Зараз / Пропозиція / Web / iOS / Android</div>
 
   </div>
@@ -3570,6 +3823,78 @@ fun AddToCartButton(productId: String) {
       setLabel('Додаємо…');
       status.textContent = 'Додаємо до кошика…';
       fakeRequest().then(succeed);
+    });
+  })();
+
+  /* ---- "Зараз": миттєве перемикання бейджа, без transition і без burst ---- */
+  (function wireBeforeBell() {
+    const btn = document.getElementById('bellBefore');
+    if (!btn) return;
+    const badge = btn.querySelector('.bell-badge-before');
+    let active = false;
+    btn.addEventListener('click', () => {
+      active = !active;
+      badge.style.display = active ? 'block' : 'none';
+      btn.setAttribute('aria-pressed', String(active));
+    });
+  })();
+
+  /* ---- "Пропозиція": без мережевого запиту — клік миттєво перемикає бейдж.
+     Поява бейджа: spring-виринання (та сама крива, що й clip-circle серця) + burst.
+     Зникнення: коротке "стиснення" іконки, бейдж ховається швидко, без burst —
+     дзеркалить асиметрію heart succeed()/unlike. ---- */
+  (function wireProposalBell() {
+    const wrap  = document.getElementById('bellWrap');
+    const btn   = document.getElementById('bellBtn');
+    const svg   = document.getElementById('bellSvg');
+    const badge = document.getElementById('bellBadge');
+    const status = document.getElementById('bellStatus');
+    if (!wrap || !btn) return;
+    let active = false;
+
+    function burst() {
+      // Частинки центруються на самому бейджі, не на всій кнопці — як у cart/heart
+      const badgeRect = badge.getBoundingClientRect();
+      const wrapRect  = wrap.getBoundingClientRect();
+      const cx = badgeRect.left - wrapRect.left + badgeRect.width / 2;
+      const cy = badgeRect.top  - wrapRect.top  + badgeRect.height / 2;
+      const n = 8, dist = 18;
+      for (let i = 0; i < n; i++) {
+        const angle = (i / n) * Math.PI * 2;
+        const dot = document.createElement('span');
+        dot.style.cssText = 'position:absolute;width:4px;height:4px;border-radius:50%;background:#F58220;pointer-events:none;opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
+        dot.style.left = cx + 'px';
+        dot.style.top  = cy + 'px';
+        dot.style.transform = 'translate(-50%,-50%)';
+        wrap.appendChild(dot);
+        void dot.offsetWidth; // forced reflow — без нього transition не спрацює з першого кліку
+        dot.style.transform = 'translate(calc(-50% + ' + Math.cos(angle) * dist + 'px), calc(-50% + ' + Math.sin(angle) * dist + 'px))';
+        dot.style.opacity = '0';
+        setTimeout(() => dot.remove(), 550);
+      }
+    }
+
+    btn.addEventListener('click', () => {
+      if (active) {
+        active = false;
+        btn.setAttribute('aria-pressed', 'false');
+        badge.style.transition = 'transform 300ms ease-in';
+        badge.style.transform  = 'scale(0)';
+        svg.style.transform = 'scale(0.85)';
+        setTimeout(() => (svg.style.transform = 'scale(1)'), 150);
+        status.textContent = '';
+        return;
+      }
+
+      active = true;
+      btn.setAttribute('aria-pressed', 'true');
+      badge.style.transition = 'transform 450ms cubic-bezier(.34,1.56,.64,1)';
+      badge.style.transform  = 'scale(1)';
+      svg.style.transform = 'scale(1.25)';
+      setTimeout(() => (svg.style.transform = 'scale(1)'), 220);
+      burst();
+      status.textContent = 'Нове сповіщення';
+      setTimeout(() => { if (status.textContent === 'Нове сповіщення') status.textContent = ''; }, 1500);
     });
   })();
 
