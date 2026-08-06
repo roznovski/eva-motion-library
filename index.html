@@ -351,7 +351,7 @@
   .cart-btn.in-cart .cart-icon-default { display: none; }
   .cart-btn.in-cart .cart-icon-success { display: block; }
 
-  /* "Пропозиція": всі три іконки в одному слоті, crossfade через opacity */
+  /* "Пропозиція": spinner + merged cart-svg у слоті */
   .cart-icon-slot {
     position: relative; width: 20px; height: 20px; flex-shrink: 0;
   }
@@ -361,12 +361,25 @@
     opacity: 0; transform-origin: center; pointer-events: none;
     animation: cart-spin 0.8s linear infinite;
   }
+  .cart-svg { opacity: 1; }
   .cart-btn.is-good .cart-spinner,
-  .cart-btn.is-good .cart-icon-default,
-  .cart-btn.is-good .cart-icon-success {
+  .cart-btn.is-good .cart-svg {
     transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
   }
-  /* Label теж плавно змінюється */
+  .cart-wrap.loading .cart-spinner { opacity: 1; }
+  .cart-wrap.loading .cart-svg    { opacity: 0; }
+
+  /* Лінії всередині кошика: зникають при переході в стан "У кошику" */
+  .ci-line { opacity: 1; }
+  .cart-btn.in-cart .ci-line { opacity: 0; }
+  .cart-btn.is-good .ci-line {
+    transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+
+  /* Галочка: прихована через stroke-dashoffset (--ci-len встановлюється JS) */
+  .ci-check { stroke-dashoffset: var(--ci-len, 20); fill: none; }
+
+  /* Label плавно змінюється */
   .cart-btn.is-good .cart-label {
     transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
   }
@@ -1913,8 +1926,13 @@ fun EVADropdown(options: List&lt;String&gt;) {
                     <circle cx="10" cy="10" r="8" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
                     <circle cx="10" cy="10" r="8" stroke="white" stroke-width="1.5" stroke-dasharray="13 39" stroke-linecap="round"/>
                   </svg>
-                  <svg class="cart-icon-default" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="3" y1="11.5" x2="17" y2="11.5" stroke="white" stroke-width="1.5"/><line x1="3.5" y1="14.5" x2="16" y2="14.5" stroke="white" stroke-width="1.5"/></svg>
-                  <svg class="cart-icon-success" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 11.25L9.17 12.92L12.5 9.58" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <svg class="cart-svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6"/>
+                    <path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8"/>
+                    <line class="ci-line" x1="3" y1="11.5" x2="17" y2="11.5"/>
+                    <line class="ci-line" x1="3.5" y1="14.5" x2="16" y2="14.5"/>
+                    <path class="ci-check" d="M7.5 11.25L9.17 12.92L12.5 9.58"/>
+                  </svg>
                 </span>
                 <span class="cart-label">До кошика</span>
               </button>
@@ -2974,20 +2992,16 @@ fun AddToCartButton(productId: String) {
     const btn = document.getElementById('cartBtn');
     if (!wrap || !btn) return;
     const label = btn.querySelector('.cart-label');
-    const spinner = btn.querySelector('.cart-spinner');
-    const iconDefault = btn.querySelector('.cart-icon-default');
-    const iconSuccess = btn.querySelector('.cart-icon-success');
+    const check = btn.querySelector('.ci-check');
     const slowToggle = document.getElementById('slowNetToggleCart');
     const status = document.getElementById('cartStatus');
     let inCart = false;
     let pending = false;
 
-    /* Показує потрібну іконку через opacity (crossfade) */
-    function showIcon(which) {
-      spinner.style.opacity     = which === 'spinner' ? '1' : '0';
-      iconDefault.style.opacity = which === 'default'  ? '1' : '0';
-      iconSuccess.style.opacity = which === 'success'  ? '1' : '0';
-    }
+    // Ініціалізуємо stroke-dash для галочки: прихована поки не in-cart
+    const checkLen = check.getTotalLength();
+    check.style.strokeDasharray = checkLen;
+    check.style.setProperty('--ci-len', checkLen);
 
     /* Плавна заміна тексту: зникає → міняється → з'являється */
     function setLabel(text) {
@@ -3017,10 +3031,11 @@ fun AddToCartButton(productId: String) {
     function succeed() {
       pending = false;
       inCart = true;
-      wrap.classList.remove('loading');
-      btn.classList.add('in-cart');  // CSS-transition: bg #212121→#fff, color #fff→#212121
+      wrap.classList.remove('loading');  // CSS: spinner ховається, cart-svg з'являється
+      // Галочка промальовується після невеликої затримки (svg встигає сфейдитись)
+      check.style.transition = 'stroke-dashoffset 250ms cubic-bezier(0,0,0,1) 120ms';
+      btn.classList.add('in-cart');  // CSS: bg→#fff, color→#212121, лінії зникають, dashoffset→0
       btn.setAttribute('aria-pressed', 'true');
-      showIcon('success');
       setLabel('У кошику');
       btn.style.transform = 'scale(1.04)';
       setTimeout(() => (btn.style.transform = 'scale(1)'), 150);
@@ -3031,9 +3046,10 @@ fun AddToCartButton(productId: String) {
 
     function reset() {
       inCart = false;
-      btn.classList.remove('in-cart');  // CSS-transition: bg #fff→#212121, color #212121→#fff
+      // Галочка швидко стирається перед поверненням у дефолт
+      check.style.transition = 'stroke-dashoffset 150ms cubic-bezier(0.3,0,1,1) 0ms';
+      btn.classList.remove('in-cart');  // CSS: bg→#212121, color→#fff, лінії з'являються, dashoffset→len
       btn.setAttribute('aria-pressed', 'false');
-      showIcon('default');
       setLabel('До кошика');
       status.textContent = '';
     }
@@ -3058,8 +3074,7 @@ fun AddToCartButton(productId: String) {
         return;
       }
 
-      wrap.classList.add('loading');
-      showIcon('spinner');
+      wrap.classList.add('loading');  // CSS: spinner з'являється, cart-svg ховається
       setLabel('Додаємо…');
       status.textContent = 'Додаємо до кошика…';
       fakeRequest().then(succeed);
