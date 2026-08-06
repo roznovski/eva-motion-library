@@ -376,8 +376,8 @@
     transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
   }
 
-  /* Галочка: stroke-dashoffset повністю керується через JS inline style */
-  .ci-check { fill: none; }
+  /* Галочка: прихована за замовчуванням — JS відкриває в succeed() */
+  .ci-check { fill: none; opacity: 0; }
 
   /* Label плавно змінюється */
   .cart-btn.is-good .cart-label {
@@ -3044,7 +3044,7 @@ fun AddToCartButton(productId: String) {
       pending = false;
       inCart = true;
       wrap.classList.remove('loading');  // CSS: spinner ховається, cart-svg з'являється
-      // Forced reflow гарантує що transition зафіксується ПЕРЕД зміною значення
+      check.style.opacity = '1';        // зняти CSS opacity:0 перед анімацією
       check.style.transition = 'stroke-dashoffset 200ms cubic-bezier(0,0,0,1) 60ms';
       void check.offsetWidth; // зафіксувати transition у поточному стилі
       check.style.strokeDashoffset = '0'; // промалювати галочку
@@ -3063,7 +3063,8 @@ fun AddToCartButton(productId: String) {
       // Стерти галочку швидко
       check.style.transition = 'stroke-dashoffset 150ms cubic-bezier(0.3,0,1,1) 0ms';
       void check.offsetWidth;
-      check.style.strokeDashoffset = checkLen + 2; // сховати (з буфером)
+      check.style.strokeDashoffset = checkLen + 2; // стерти
+      setTimeout(() => { check.style.opacity = ''; }, 160); // повернути CSS opacity:0 після анімації
       btn.classList.remove('in-cart');  // CSS: bg→#212121, color→#fff, лінії з'являються
       btn.setAttribute('aria-pressed', 'false');
       setLabel('До кошика');
