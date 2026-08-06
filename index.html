@@ -3002,7 +3002,7 @@ fun AddToCartButton(productId: String) {
     // Керуємо stroke-dashoffset через inline JS (не CSS cascade) — надійніше для transitions
     const checkLen = check.getTotalLength();
     check.style.strokeDasharray = checkLen;
-    check.style.strokeDashoffset = checkLen; // приховати
+    check.style.strokeDashoffset = checkLen + 2; // +2px буфер: уникаємо sub-pixel артефакту на межі dash/gap
 
     // Фіксуємо ширину кнопки в дефолтному стані, щоб зміна тексту не змінювала layout
     document.fonts.ready.then(() => { btn.style.minWidth = btn.offsetWidth + 'px'; });
@@ -3063,7 +3063,7 @@ fun AddToCartButton(productId: String) {
       // Стерти галочку швидко
       check.style.transition = 'stroke-dashoffset 150ms cubic-bezier(0.3,0,1,1) 0ms';
       void check.offsetWidth;
-      check.style.strokeDashoffset = checkLen; // сховати
+      check.style.strokeDashoffset = checkLen + 2; // сховати (з буфером)
       btn.classList.remove('in-cart');  // CSS: bg→#212121, color→#fff, лінії з'являються
       btn.setAttribute('aria-pressed', 'false');
       setLabel('До кошика');
