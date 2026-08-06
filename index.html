@@ -388,6 +388,53 @@
     transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
   }
 
+  /* ---------- Tooltip component ---------- */
+  .tt-section .compare,
+  .tt-section .compare-col { overflow: visible; }
+  .compare-demo.tt-demo { overflow: visible; }
+
+  .tt-wrap { position: relative; display: inline-flex; }
+  .tt-trigger {
+    display: flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; padding: 0; border: none; background: none; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tt-trigger svg { display: block; }
+
+  .tt-bubble {
+    position: absolute; top: calc(100% + 12px); left: 50%;
+    width: 320px; max-width: calc(100vw - 48px);
+    background: #fff; border-radius: 8px; padding: 16px; text-align: left; z-index: 10;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.06)) drop-shadow(0 4px 16px rgba(0,0,0,.10));
+  }
+  .tt-text { margin: 0; font-size: 14px; line-height: 20px; font-weight: 400; color: #212121; }
+  .tt-arrow { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); display: block; }
+
+  /* Зараз: миттєва поява/зникнення без transition, іконка не реагує на ховер */
+  .tt-wrap.is-bad .tt-bubble { display: none; transform: translateX(-50%); }
+  .tt-wrap.is-bad:hover .tt-bubble,
+  .tt-wrap.is-bad .tt-trigger:focus-visible ~ .tt-bubble { display: block; }
+
+  /* Пропозиція: та сама поява, що й у dropdown-меню — opacity + translateY,
+     duration-expand/decelerate для руху, duration-quick/standard для прозорості */
+  .tt-wrap.is-good .tt-bubble {
+    opacity: 0; pointer-events: none;
+    transform: translateX(-50%) translateY(-6px);
+    transition:
+      opacity   var(--motion-duration-quick)  var(--motion-easing-standard),
+      transform var(--motion-duration-expand) var(--motion-easing-decelerate);
+  }
+  .tt-wrap.is-good:hover .tt-bubble,
+  .tt-wrap.is-good .tt-trigger:focus-visible ~ .tt-bubble {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+
+  /* Іконка темніє до фірмового чорного на ховер — як контур heart/checkbox/radio */
+  .tt-wrap.is-good .tt-icon-outline {
+    transition: stroke var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+  .tt-wrap.is-good:hover .tt-icon-outline { stroke: #212121; }
+
   @media (max-width: 640px) {
     .wrap { padding: 0 16px 56px; }
     .intro { padding: 40px 0 28px; }
@@ -409,6 +456,8 @@
 
     .slow-toggle { font-size: 12px; padding: 6px 12px 6px 8px; }
     .token { font-size: 10px; }
+
+    .tt-bubble { width: calc(100vw - 56px); max-width: 320px; }
   }
 </style>
 </head>
@@ -2671,6 +2720,238 @@ fun AddToCartButton(productId: String) {
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold
         )
+    }
+}</pre>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ Interaction: Tooltip ============ -->
+    <section class="interaction tt-section">
+      <div class="interaction-head">
+        <h2>Підказка (tooltip)</h2>
+        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=8125-28232&t=hRdb1Xds5ThByY8a-1" target="_blank" rel="noopener">View in Figma →</a>
+      </div>
+
+      <div class="compare">
+        <!-- ─── Зараз ─── -->
+        <div class="compare-col is-bad">
+          <span class="compare-tag bad">Зараз</span>
+          <div class="compare-demo tt-demo">
+            <div class="tt-wrap is-bad">
+              <button class="tt-trigger" aria-label="Інформація про товар" aria-describedby="ttBadBubble">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path class="tt-icon-outline" d="M10.83 13.33H10M10 13.33V9.167H9.167M10 13.33H9.167M10 6.667H10.01M17.5 10C17.5 10.98 17.31 11.96 16.93 12.87C16.55 13.78 16 14.61 15.3 15.3C14.61 16 13.78 16.55 12.87 16.93C11.96 17.31 10.98 17.5 10 17.5C9.015 17.5 8.04 17.31 7.13 16.93C6.22 16.55 5.393 16 4.697 15.3C4 14.61 3.448 13.78 3.071 12.87C2.694 11.96 2.5 10.98 2.5 10C2.5 8.011 3.29 6.103 4.697 4.697C6.103 3.29 8.011 2.5 10 2.5C11.99 2.5 13.9 3.29 15.3 4.697C16.71 6.103 17.5 8.011 17.5 10Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="tt-bubble" id="ttBadBubble" role="tooltip">
+                <p class="tt-text">Це товар продавця EVA.UA (ТОВ 'РУШ'), який розміщений на його складі. Комплектацію та відправку замовлення буде виконано за стандартами EVA.UA у визначений термін</p>
+                <svg class="tt-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M6 0L12 8H0L6 0Z" fill="white"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── Пропозиція ─── -->
+        <div class="compare-col is-good">
+          <span class="compare-tag good">Пропозиція</span>
+          <div class="compare-demo tt-demo">
+            <div class="tt-wrap is-good">
+              <button class="tt-trigger" aria-label="Інформація про товар" aria-describedby="ttGoodBubble">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path class="tt-icon-outline" d="M10.83 13.33H10M10 13.33V9.167H9.167M10 13.33H9.167M10 6.667H10.01M17.5 10C17.5 10.98 17.31 11.96 16.93 12.87C16.55 13.78 16 14.61 15.3 15.3C14.61 16 13.78 16.55 12.87 16.93C11.96 17.31 10.98 17.5 10 17.5C9.015 17.5 8.04 17.31 7.13 16.93C6.22 16.55 5.393 16 4.697 15.3C4 14.61 3.448 13.78 3.071 12.87C2.694 11.96 2.5 10.98 2.5 10C2.5 8.011 3.29 6.103 4.697 4.697C6.103 3.29 8.011 2.5 10 2.5C11.99 2.5 13.9 3.29 15.3 4.697C16.71 6.103 17.5 8.011 17.5 10Z" stroke="#BFBFBF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="tt-bubble" id="ttGoodBubble" role="tooltip">
+                <p class="tt-text">Це товар продавця EVA.UA (ТОВ 'РУШ'), який розміщений на його складі. Комплектацію та відправку замовлення буде виконано за стандартами EVA.UA у визначений термін</p>
+                <svg class="tt-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M6 0L12 8H0L6 0Z" fill="white"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="tokens">
+            <span class="token">--motion-duration-expand</span>
+            <span class="token">--motion-easing-decelerate</span>
+            <span class="token">--motion-easing-standard</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="code-toggle">
+        <summary>Показати код (Web / iOS / Android)</summary>
+        <div class="code-tabs">
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="web">Web</button>
+            <button class="tab-btn" data-tab="ios">iOS · UIKit</button>
+            <button class="tab-btn" data-tab="android">Android · Compose</button>
+          </div>
+
+          <pre class="tab-panel active" data-panel="web">&lt;div class="tt-wrap"&gt;
+  &lt;button class="tt-trigger" aria-label="Інформація про товар" aria-describedby="ttBubble"&gt;
+    &lt;svg width="20" height="20"&gt;&lt;!-- info-circle icon path --&gt;&lt;/svg&gt;
+  &lt;/button&gt;
+  &lt;div class="tt-bubble" id="ttBubble" role="tooltip"&gt;
+    &lt;p class="tt-text"&gt;Текст підказки&lt;/p&gt;
+    &lt;svg class="tt-arrow" width="12" height="8"&gt;&lt;!-- arrow triangle --&gt;&lt;/svg&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+/* Іконка темніє до фірмового чорного на ховер/фокус тригера */
+.tt-icon-outline {
+  transition: stroke var(--motion-duration-fast) var(--motion-easing-standard);
+}
+.tt-wrap:hover .tt-icon-outline { stroke: #212121; }
+
+/* Бабл: та сама поява, що й у dropdown-меню — opacity + translateY,
+   duration-expand/decelerate для руху, duration-quick/standard для прозорості */
+.tt-bubble {
+  position: absolute; top: calc(100% + 12px); left: 50%;
+  width: 320px; background: #fff; border-radius: 8px; padding: 16px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.06)) drop-shadow(0 4px 16px rgba(0,0,0,.10));
+  opacity: 0; pointer-events: none;
+  transform: translateX(-50%) translateY(-6px);
+  transition:
+    opacity   var(--motion-duration-quick)  var(--motion-easing-standard),
+    transform var(--motion-duration-expand) var(--motion-easing-decelerate);
+}
+/* Не тільки :hover — фокус клавіатурою теж показує підказку (a11y) */
+.tt-wrap:hover .tt-bubble,
+.tt-trigger:focus-visible ~ .tt-bubble {
+  opacity: 1; transform: translateX(-50%) translateY(0);
+}</pre>
+
+          <pre class="tab-panel" data-panel="ios">final class InfoTooltipView: UIView {
+    private let trigger  = UIButton(type: .system)
+    private let bubble   = UIView()
+    private let textLabel = UILabel()
+    private let arrow    = UIImageView()
+    private var hoverGR: UIHoverGestureRecognizer!
+
+    override init(frame: CGRect) { super.init(frame: frame); setup() }
+    required init?(coder: NSCoder) { super.init(coder: coder); setup() }
+
+    private func setup() {
+        trigger.setImage(UIImage(systemName: "info.circle")?
+            .withRenderingMode(.alwaysTemplate), for: .normal)
+        trigger.tintColor = UIColor(white: 0.75, alpha: 1) // #BFBFBF
+        trigger.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
+        addSubview(trigger)
+
+        // Hover (trackpad/pointer) — прямий аналог CSS :hover
+        hoverGR = UIHoverGestureRecognizer(target: self, action: #selector(handleHover))
+        trigger.addGestureRecognizer(hoverGR)
+        // Тач-пристрої: показ по натисканню й утриманню, як :focus-visible
+        trigger.addTarget(self, action: #selector(show), for: .touchDown)
+        trigger.addTarget(self, action: #selector(hide), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+
+        bubble.backgroundColor    = .white
+        bubble.layer.cornerRadius = 8
+        bubble.layer.shadowColor   = UIColor.black.cgColor
+        bubble.layer.shadowOpacity = 0.1
+        bubble.layer.shadowOffset  = CGSize(width: 0, height: 4)
+        bubble.layer.shadowRadius  = 16
+        bubble.alpha     = 0
+        bubble.transform = CGAffineTransform(translationX: 0, y: -6)
+        bubble.isUserInteractionEnabled = false
+        addSubview(bubble)
+
+        textLabel.text = "Це товар продавця EVA.UA (ТОВ 'РУШ'), який розміщений на його складі. Комплектацію та відправку замовлення буде виконано за стандартами EVA.UA у визначений термін"
+        textLabel.font = UIFont.systemFont(ofSize: 14)
+        textLabel.textColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+        textLabel.numberOfLines = 0
+        bubble.addSubview(textLabel)
+
+        arrow.image = UIImage(named: "tooltip-arrow") // 12×8, білий трикутник
+        bubble.addSubview(arrow)
+
+        layoutBubble()
+    }
+
+    private func layoutBubble() {
+        bubble.frame = CGRect(x: -150, y: 32, width: 320, height: 0)
+        textLabel.frame = bubble.bounds.insetBy(dx: 16, dy: 16)
+        textLabel.sizeToFit()
+        bubble.frame.size.height = textLabel.frame.height + 32
+        arrow.frame = CGRect(x: bubble.bounds.midX - 6, y: -8, width: 12, height: 8)
+    }
+
+    @objc private func handleHover(_ gr: UIHoverGestureRecognizer) {
+        switch gr.state {
+        case .began, .changed: show()
+        default:                hide()
+        }
+    }
+
+    @objc private func show() {
+        // Іконка темніє до фірмового чорного, як у веб-версії
+        UIView.animate(withDuration: 0.1) { self.trigger.tintColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1) }
+        // duration-expand (250ms), decelerate-крива — та сама поява, що й у dropdown
+        UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
+            self.bubble.alpha     = 1
+            self.bubble.transform = .identity
+        }
+    }
+
+    @objc private func hide() {
+        UIView.animate(withDuration: 0.1) { self.trigger.tintColor = UIColor(white: 0.75, alpha: 1) }
+        UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
+            self.bubble.alpha     = 0
+            self.bubble.transform = CGAffineTransform(translationX: 0, y: -6)
+        }
+    }
+}</pre>
+
+          <pre class="tab-panel" data-panel="android">@Composable
+fun InfoTooltip(text: String) {
+    var isHovered by remember { mutableStateOf(false) }
+    var isFocused by remember { mutableStateOf(false) }
+    val visible = isHovered || isFocused
+
+    val iconTint by animateColorAsState(
+        targetValue = if (visible) Color(0xFF212121) else Color(0xFFBFBFBF),
+        animationSpec = tween(durationMillis = 100),
+        label = "tooltipIconTint"
+    )
+
+    Box {
+        Icon(
+            imageVector = Icons.Outlined.Info,
+            contentDescription = "Інформація про товар",
+            tint = iconTint,
+            modifier = Modifier
+                .size(20.dp)
+                .hoverable(interactionSource = remember { MutableInteractionSource() }
+                    .also { src ->
+                        LaunchedEffect(src) {
+                            src.interactions.collect {
+                                isHovered = it is HoverInteraction.Enter
+                            }
+                        }
+                    })
+                .onFocusEvent { isFocused = it.isFocused }
+                .focusable()
+        )
+
+        // Той самий рух, що й у dropdown-меню — opacity + вертикальний зсув,
+        // AnimatedVisibility з tween(250, decelerate-easing)
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(tween(150, easing = LinearOutSlowInEasing)) +
+                    slideInVertically(tween(250, easing = LinearOutSlowInEasing)) { -it / 4 },
+            exit  = fadeOut(tween(150)) +
+                    slideOutVertically(tween(250, easing = LinearOutSlowInEasing)) { -it / 4 }
+        ) {
+            Card(
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .width(320.dp),
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Text(
+                    text = text,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    color = Color(0xFF212121),
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
     }
 }</pre>
         </div>
