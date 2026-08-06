@@ -341,22 +341,35 @@
       color            var(--motion-duration-base)  var(--motion-easing-standard);
   }
   .cart-btn.is-good:not(.in-cart):hover { background: #3a3a3a; }
+  .cart-btn.is-good.in-cart:hover       { background: #f0f0f0; }
 
-  .cart-btn.in-cart { background: #fff; color: #212121; pointer-events: none; }
+  .cart-btn.in-cart { background: #fff; color: #212121; }
 
+  /* "Зараз": icon swap via display — abrupt, відповідно до паттерну */
   .cart-icon-default { display: block; flex-shrink: 0; }
-  .cart-icon-success { display: none; flex-shrink: 0; }
+  .cart-icon-success { display: none;  flex-shrink: 0; }
   .cart-btn.in-cart .cart-icon-default { display: none; }
   .cart-btn.in-cart .cart-icon-success { display: block; }
 
-  /* Spinner: shown only during loading, animated rotation */
+  /* "Пропозиція": всі три іконки в одному слоті, crossfade через opacity */
+  .cart-icon-slot {
+    position: relative; width: 20px; height: 20px; flex-shrink: 0;
+  }
+  .cart-icon-slot > * { position: absolute; top: 0; left: 0; display: block; }
+
   .cart-spinner {
-    display: none; flex-shrink: 0;
-    transform-origin: center;
+    opacity: 0; transform-origin: center; pointer-events: none;
     animation: cart-spin 0.8s linear infinite;
   }
-  .cart-wrap.loading .cart-spinner      { display: block; }
-  .cart-wrap.loading .cart-icon-default { display: none; }
+  .cart-btn.is-good .cart-spinner,
+  .cart-btn.is-good .cart-icon-default,
+  .cart-btn.is-good .cart-icon-success {
+    transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
+  }
+  /* Label теж плавно змінюється */
+  .cart-btn.is-good .cart-label {
+    transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
+  }
 
   @keyframes cart-spin { to { transform: rotate(360deg); } }
 
@@ -1895,12 +1908,14 @@ fun EVADropdown(options: List&lt;String&gt;) {
           <div class="compare-demo">
             <div class="cart-wrap" id="cartWrap">
               <button class="cart-btn is-good" id="cartBtn" aria-pressed="false" aria-label="Додати до кошика">
-                <svg class="cart-spinner" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="8" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-                  <circle cx="10" cy="10" r="8" stroke="white" stroke-width="1.5" stroke-dasharray="13 39" stroke-linecap="round"/>
-                </svg>
-                <svg class="cart-icon-default" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="3" y1="11.5" x2="17" y2="11.5" stroke="white" stroke-width="1.5"/><line x1="3.5" y1="14.5" x2="16" y2="14.5" stroke="white" stroke-width="1.5"/></svg>
-                <svg class="cart-icon-success" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 11.25L9.17 12.92L12.5 9.58" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="cart-icon-slot">
+                  <svg class="cart-spinner" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="8" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+                    <circle cx="10" cy="10" r="8" stroke="white" stroke-width="1.5" stroke-dasharray="13 39" stroke-linecap="round"/>
+                  </svg>
+                  <svg class="cart-icon-default" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="3" y1="11.5" x2="17" y2="11.5" stroke="white" stroke-width="1.5"/><line x1="3.5" y1="14.5" x2="16" y2="14.5" stroke="white" stroke-width="1.5"/></svg>
+                  <svg class="cart-icon-success" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 11.25L9.17 12.92L12.5 9.58" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
                 <span class="cart-label">До кошика</span>
               </button>
             </div>
@@ -2937,13 +2952,19 @@ fun AddToCartButton(productId: String) {
     let pending = false;
 
     btn.addEventListener('click', () => {
-      if (pending || btn.classList.contains('in-cart')) return;
+      if (pending) return;
       pending = true;
-      // та сама пауза 800мс без жодного фідбека, потім різкий стрибок у фінальний стан
+      const isInCart = btn.classList.contains('in-cart');
+      // та сама пауза 800мс без жодного фідбека → різкий стрибок (в обидва боки)
       setTimeout(() => {
         pending = false;
-        btn.classList.add('in-cart');
-        label.textContent = 'У кошику';
+        if (isInCart) {
+          btn.classList.remove('in-cart');
+          label.textContent = 'До кошика';
+        } else {
+          btn.classList.add('in-cart');
+          label.textContent = 'У кошику';
+        }
       }, 800);
     });
   })();
@@ -2953,10 +2974,26 @@ fun AddToCartButton(productId: String) {
     const btn = document.getElementById('cartBtn');
     if (!wrap || !btn) return;
     const label = btn.querySelector('.cart-label');
+    const spinner = btn.querySelector('.cart-spinner');
+    const iconDefault = btn.querySelector('.cart-icon-default');
+    const iconSuccess = btn.querySelector('.cart-icon-success');
     const slowToggle = document.getElementById('slowNetToggleCart');
     const status = document.getElementById('cartStatus');
     let inCart = false;
     let pending = false;
+
+    /* Показує потрібну іконку через opacity (crossfade) */
+    function showIcon(which) {
+      spinner.style.opacity     = which === 'spinner' ? '1' : '0';
+      iconDefault.style.opacity = which === 'default'  ? '1' : '0';
+      iconSuccess.style.opacity = which === 'success'  ? '1' : '0';
+    }
+
+    /* Плавна заміна тексту: зникає → міняється → з'являється */
+    function setLabel(text) {
+      label.style.opacity = '0';
+      setTimeout(() => { label.textContent = text; label.style.opacity = '1'; }, 100);
+    }
 
     function fakeRequest() {
       const delay = slowToggle.checked ? 2200 + Math.random() * 1200 : 250 + Math.random() * 250;
@@ -2970,7 +3007,7 @@ fun AddToCartButton(productId: String) {
         const dot = document.createElement('span');
         dot.style.cssText = 'position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#76BF44;pointer-events:none;transform:translate(-50%,-50%);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.3,1), opacity .5s ease-out;';
         wrap.appendChild(dot);
-        void dot.offsetWidth; // forced reflow — той самий фікс, що й скрізь
+        void dot.offsetWidth;
         dot.style.transform = 'translate(calc(-50% + ' + Math.cos(angle) * dist + 'px), calc(-50% + ' + Math.sin(angle) * dist + 'px))';
         dot.style.opacity = '0';
         setTimeout(() => dot.remove(), 550);
@@ -2981,9 +3018,10 @@ fun AddToCartButton(productId: String) {
       pending = false;
       inCart = true;
       wrap.classList.remove('loading');
-      btn.classList.add('in-cart');  // запускає CSS-transition bg + color
+      btn.classList.add('in-cart');  // CSS-transition: bg #212121→#fff, color #fff→#212121
       btn.setAttribute('aria-pressed', 'true');
-      label.textContent = 'У кошику';
+      showIcon('success');
+      setLabel('У кошику');
       btn.style.transform = 'scale(1.04)';
       setTimeout(() => (btn.style.transform = 'scale(1)'), 150);
       burst();
@@ -2991,19 +3029,38 @@ fun AddToCartButton(productId: String) {
       setTimeout(() => { if (status.textContent === 'Додано до кошика') status.textContent = ''; }, 1500);
     }
 
+    function reset() {
+      inCart = false;
+      btn.classList.remove('in-cart');  // CSS-transition: bg #fff→#212121, color #212121→#fff
+      btn.setAttribute('aria-pressed', 'false');
+      showIcon('default');
+      setLabel('До кошика');
+      status.textContent = '';
+    }
+
     btn.addEventListener('click', () => {
-      if (pending || inCart) return;
+      if (pending) return;
+
+      // "У кошику" → повернення до дефолтного стану
+      if (inCart) {
+        btn.style.transform = 'scale(0.97)';
+        setTimeout(() => (btn.style.transform = 'scale(1)'), 100);
+        reset();
+        return;
+      }
 
       pending = true;
-      btn.style.transform = 'scale(0.97)'; // press-фідбек, <100ms
+      btn.style.transform = 'scale(0.97)';  // press-фідбек, <100ms
       setTimeout(() => (btn.style.transform = 'scale(1)'), 100);
 
       if (!slowToggle.checked) {
-        succeed(); // оптимістичний UI: без стану завантаження
+        succeed();  // оптимістичний UI: без стану завантаження
         return;
       }
 
       wrap.classList.add('loading');
+      showIcon('spinner');
+      setLabel('Додаємо…');
       status.textContent = 'Додаємо до кошика…';
       fakeRequest().then(succeed);
     });
