@@ -351,23 +351,29 @@
   .cart-btn.in-cart .cart-icon-default { display: none; }
   .cart-btn.in-cart .cart-icon-success { display: block; }
 
-  /* "Пропозиція": spinner + merged cart-svg у слоті */
+  /* "Пропозиція": trace + merged cart-svg у слоті */
   .cart-icon-slot {
     position: relative; width: 20px; height: 20px; flex-shrink: 0;
   }
   .cart-icon-slot > * { position: absolute; top: 0; left: 0; display: block; }
 
-  .cart-spinner {
-    opacity: 0; transform-origin: center; pointer-events: none;
-    animation: cart-spin 0.8s linear infinite;
+  /* Trace SVG — контур кошика, що промальовується по колу */
+  .cart-trace { opacity: 0; pointer-events: none; transition: opacity var(--motion-duration-fast) var(--motion-easing-standard); }
+  .cart-wrap.loading .cart-trace { opacity: 1; animation: cart-trace 1.6s linear infinite; }
+  .cart-wrap.loading .cart-svg   { opacity: 0; }
+
+  .cart-svg {
+    opacity: 1;
+    transform-origin: center;
+    transition: opacity var(--motion-duration-fast) var(--motion-easing-standard),
+                transform var(--motion-duration-moderate) var(--motion-easing-spring);
   }
-  .cart-svg { opacity: 1; }
-  .cart-btn.is-good .cart-spinner,
-  .cart-btn.is-good .cart-svg {
-    transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
+
+  @keyframes cart-trace {
+    0%   { stroke-dashoffset: var(--len);     animation-timing-function: var(--motion-easing-decelerate); }
+    50%  { stroke-dashoffset: 0;               animation-timing-function: var(--motion-easing-accelerate); }
+    100% { stroke-dashoffset: var(--neg-len); }
   }
-  .cart-wrap.loading .cart-spinner { opacity: 1; }
-  .cart-wrap.loading .cart-svg    { opacity: 0; }
 
   /* Лінії всередині кошика: зникають при переході в стан "У кошику" */
   .ci-line { opacity: 1; }
@@ -383,8 +389,6 @@
   .cart-btn.is-good .cart-label {
     transition: opacity var(--motion-duration-fast) var(--motion-easing-standard);
   }
-
-  @keyframes cart-spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 640px) {
     .wrap { padding: 0 16px 56px; }
@@ -476,7 +480,7 @@
         <div class="code-tabs">
         <div class="tab-buttons">
           <button class="tab-btn active" data-tab="web">Web</button>
-          <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+          <button class="tab-btn" data-tab="ios">iOS · UIKit</button>
           <button class="tab-btn" data-tab="android">Android · Compose</button>
         </div>
 
@@ -555,69 +559,140 @@ btn.addEventListener('click', () =&gt; {
   });
 });</pre>
 
-        <pre class="tab-panel" data-panel="ios">struct WishlistHeart: View {
-    @State private var isLiked = false
-    @State private var isLoading = false
-    @State private var scale: CGFloat = 1
+        <pre class="tab-panel" data-panel="ios">// Використовується у комірці: cell.contentView.addSubview(heartView)
+class WishlistHeartView: UIView {
+    var productId: String = ""
+    private var isLiked = false
+    private var traceStartTime: CFTimeInterval = 0
+    private let pressHaptic   = UIImpactFeedbackGenerator(style: .medium)
+    private let successHaptic = UINotificationFeedbackGenerator()
 
-    let pressHaptic = UIImpactFeedbackGenerator(style: .medium)
-    let successHaptic = UINotificationFeedbackGenerator()
+    private let imageView  = UIImageView()
+    // CAShapeLayer + strokeEnd/strokeStart — UIKit-аналог CSS stroke-dashoffset.
+    // SF Symbols не надають публічного CGPath, тому трейс будується окремим
+    // CAShapeLayer з ручним контуром; у власних SVG-іконках path можна використати
+    // напряму через UIBezierPath(svgPath:) або ручним перекладом координат.
+    private let traceLayer = CAShapeLayer()
 
-    var body: some View {
-        ZStack {
-            if isLoading {
-                // кільце розміром під іконку замінює трейс контуру
-                Circle()
-                    .trim(from: 0, to: 0.25)
-                    .stroke(Color(hex: "BFBFBF"), lineWidth: 1.5)
-                    .frame(width: 24, height: 24)
-                    .rotationEffect(.degrees(isLoading ? 360 : 0))
-                    .animation(
-                        .linear(duration: 0.8).repeatForever(autoreverses: false),
-                        value: isLoading
-                    )
-            }
-            Image(systemName: isLiked ? "heart.fill" : "heart")
-                .font(.system(size: 24))
-                .foregroundStyle(isLiked ? Color(hex: "212121") : Color(hex: "BFBFBF"))
-                .scaleEffect(scale)
-        }
-        .frame(width: 56, height: 56)
-        .onTapGesture { handleTap() }
+    override init(frame: CGRect) { super.init(frame: frame); setup() }
+    required init?(coder: NSCoder) { super.init(coder: coder); setup() }
+
+    private func setup() {
+        frame.size = CGSize(width: 56, height: 56)
+        imageView.frame       = bounds
+        imageView.contentMode = .center
+        imageView.tintColor   = UIColor(red: 0.75, green: 0.75, blue: 0.75, alpha: 1)
+        imageView.image       = heartImage(filled: false)
+        addSubview(imageView)
+
+        traceLayer.frame       = CGRect(x: 16, y: 16, width: 24, height: 24)
+        traceLayer.path        = heartOutlinePath()
+        traceLayer.fillColor   = UIColor.clear.cgColor
+        traceLayer.strokeColor = UIColor(red: 0.75, green: 0.75, blue: 0.75, alpha: 1).cgColor
+        traceLayer.lineWidth   = 1.5
+        traceLayer.lineCap     = .round; traceLayer.lineJoin = .round
+        traceLayer.opacity     = 0
+        layer.addSublayer(traceLayer)
+
+        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap)))
     }
 
-    func handleTap() {
+    // Контур серця 24×24, clockwise, стартова точка — нижній центр
+    private func heartOutlinePath() -&gt; CGPath {
+        let p = UIBezierPath()
+        p.move(to: CGPoint(x: 12, y: 22))
+        p.addCurve(to: CGPoint(x: 1,  y: 8.5),
+                   controlPoint1: CGPoint(x: 5,   y: 18),
+                   controlPoint2: CGPoint(x: 1,   y: 13))
+        p.addCurve(to: CGPoint(x: 6,  y: 3),
+                   controlPoint1: CGPoint(x: 1,   y: 5.5),
+                   controlPoint2: CGPoint(x: 3.2, y: 3))
+        p.addCurve(to: CGPoint(x: 12, y: 6.5),
+                   controlPoint1: CGPoint(x: 8.8,  y: 3),
+                   controlPoint2: CGPoint(x: 12,   y: 5.5))
+        p.addCurve(to: CGPoint(x: 18, y: 3),
+                   controlPoint1: CGPoint(x: 12,   y: 5.5),
+                   controlPoint2: CGPoint(x: 15.2, y: 3))
+        p.addCurve(to: CGPoint(x: 23, y: 8.5),
+                   controlPoint1: CGPoint(x: 20.8, y: 3),
+                   controlPoint2: CGPoint(x: 23,   y: 5.5))
+        p.addCurve(to: CGPoint(x: 12, y: 22),
+                   controlPoint1: CGPoint(x: 23, y: 13),
+                   controlPoint2: CGPoint(x: 19, y: 18))
+        p.close()
+        return p.cgPath
+    }
+
+    private func heartImage(filled: Bool) -&gt; UIImage? {
+        UIImage(systemName: filled ? "heart.fill" : "heart",
+                withConfiguration: UIImage.SymbolConfiguration(pointSize: 24))?
+            .withRenderingMode(.alwaysTemplate)
+    }
+
+    private func startTrace() {
+        traceStartTime = CACurrentMediaTime()
+        traceLayer.opacity = 1
+        UIView.animate(withDuration: 0.1) { self.imageView.alpha = 0 }
+
+        let draw = CABasicAnimation(keyPath: "strokeEnd")
+        draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.8
+        draw.timingFunction = CAMediaTimingFunction(controlPoints: 0, 0, 0, 1)   // decelerate
+
+        let erase = CABasicAnimation(keyPath: "strokeStart")
+        erase.fromValue = 0; erase.toValue = 1; erase.duration = 0.8
+        erase.beginTime = 0.8
+        erase.timingFunction = CAMediaTimingFunction(controlPoints: 0.3, 0, 1, 1) // accelerate
+
+        let group = CAAnimationGroup()
+        group.animations = [draw, erase]
+        group.duration = 1.6; group.repeatCount = .infinity; group.isRemovedOnCompletion = false
+        traceLayer.add(group, forKey: "trace")
+    }
+
+    // Аналог waitForCycle(): чекаємо кінця поточного циклу контуру
+    private func waitForCycleThenSucceed() {
+        let elapsed   = (CACurrentMediaTime() - traceStartTime).truncatingRemainder(dividingBy: 1.6)
+        let remaining = max(0.05, 1.6 - elapsed)
+        DispatchQueue.main.asyncAfter(deadline: .now() + remaining) { self.succeed() }
+    }
+
+    private func succeed() {
+        traceLayer.removeAnimation(forKey: "trace")
+        UIView.animate(withDuration: 0.1) { self.traceLayer.opacity = 0; self.imageView.alpha = 1 }
+        isLiked = true
+        successHaptic.notificationOccurred(.success)
+        imageView.image     = heartImage(filled: true)
+        imageView.tintColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+        // spring-bounce 1.25→1 (--motion-easing-spring: usingSpringWithDamping 0.55)
+        UIView.animate(withDuration: 0.3, delay: 0,
+                       usingSpringWithDamping: 0.55, initialSpringVelocity: 0, options: []) {
+            self.imageView.transform = CGAffineTransform(scaleX: 1.25, y: 1.25)
+        } completion: { _ in
+            UIView.animate(withDuration: 0.22) { self.imageView.transform = .identity }
+        }
+    }
+
+    @objc private func handleTap() {
         if isLiked {
             isLiked = false
-            withAnimation(.easeIn(duration: 0.15)) { scale = 0.85 }
-            withAnimation(.easeOut(duration: 0.15).delay(0.15)) { scale = 1 }
+            imageView.image     = heartImage(filled: false)
+            imageView.tintColor = UIColor(red: 0.75, green: 0.75, blue: 0.75, alpha: 1)
+            UIView.animate(withDuration: 0.15) {
+                self.imageView.transform = CGAffineTransform(scaleX: 0.85, y: 0.85)
+            }
+            UIView.animate(withDuration: 0.15, delay: 0.15, options: []) {
+                self.imageView.transform = .identity
+            } completion: { _ in }
             return
         }
-
         pressHaptic.impactOccurred()
-        withAnimation(.easeOut(duration: 0.1)) { scale = 0.9 }
-        isLoading = true
-
+        UIView.animate(withDuration: 0.1) {
+            self.imageView.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
+        }
+        startTrace()
         Task {
-            do {
-                try await api.addToWishlist(productId)
-                await MainActor.run {
-                    isLoading = false
-                    isLiked = true
-                    successHaptic.notificationOccurred(.success)
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.55)) {
-                        scale = 1.25
-                    }
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.55).delay(0.22)) {
-                        scale = 1
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    isLoading = false
-                    // shake / toast — сценарій "Обробка помилок"
-                }
-            }
+            try? await api.addToWishlist(productId)
+            await MainActor.run { [weak self] in self?.waitForCycleThenSucceed() }
         }
     }
 }</pre>
@@ -729,7 +804,7 @@ fun WishlistHeart(productId: String) {
         <div class="code-tabs">
         <div class="tab-buttons">
           <button class="tab-btn active" data-tab="web">Web</button>
-          <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+          <button class="tab-btn" data-tab="ios">iOS · UIKit</button>
           <button class="tab-btn" data-tab="android">Android · Compose</button>
         </div>
 
@@ -810,62 +885,109 @@ function wireCheckboxRow(row) {
 
 document.querySelectorAll('.checkbox-row').forEach(wireCheckboxRow);</pre>
 
-        <pre class="tab-panel" data-panel="ios">// Використовується як рядок у List(items) { item in SelectableCheckbox(...) }
-struct SelectableCheckbox: View {
-    @State private var isSelected = false
-    @State private var isLoading = false
-    @State private var scale: CGFloat = 1
+        <pre class="tab-panel" data-panel="ios">// Використовується як рядок у tableView: cell.accessoryView = CheckboxControl()
+class CheckboxControl: UIControl {
+    var itemId: String = ""
+    private(set) var isChecked = false
+    private var isLoading = false
+    private var traceStartTime: CFTimeInterval = 0
+    private let pressHaptic = UIImpactFeedbackGenerator(style: .light)
 
-    let pressHaptic = UIImpactFeedbackGenerator(style: .light)
+    private let imageView  = UIImageView()
+    // Трейс по квадратному контуру чекбокса — CAShapeLayer з roundedRect path.
+    // strokeEnd/strokeStart цикл 1.2s (менший елемент — коротший цикл).
+    private let traceLayer = CAShapeLayer()
 
-    var body: some View {
-        ZStack {
-            if isLoading {
-                // кільце розміром під іконку замінює трейс контуру
-                Circle()
-                    .trim(from: 0, to: 0.25)
-                    .stroke(Color(hex: "BFBFBF"), lineWidth: 1.5)
-                    .frame(width: 20, height: 20)
-                    .rotationEffect(.degrees(isLoading ? 360 : 0))
-                    .animation(
-                        .linear(duration: 0.6).repeatForever(autoreverses: false),
-                        value: isLoading
-                    )
-            } else {
-                Image(systemName: isSelected ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 22))
-                    .foregroundStyle(isSelected ? Color(hex: "212121") : Color(hex: "BFBFBF"))
-                    .scaleEffect(scale)
-            }
-        }
-        .onTapGesture { handleTap() }
+    override init(frame: CGRect) { super.init(frame: frame); setup() }
+    required init?(coder: NSCoder) { super.init(coder: coder); setup() }
+
+    private func setup() {
+        frame.size = CGSize(width: 44, height: 44)
+        imageView.frame       = CGRect(x: 12, y: 12, width: 20, height: 20)
+        imageView.contentMode = .scaleAspectFit
+        imageView.tintColor   = UIColor(red: 0.75, green: 0.75, blue: 0.75, alpha: 1)
+        imageView.image       = checkImage(checked: false)
+        addSubview(imageView)
+
+        traceLayer.frame       = imageView.frame
+        traceLayer.path        = UIBezierPath(roundedRect: CGRect(x: 0.75, y: 0.75, width: 18.5, height: 18.5),
+                                              cornerRadius: 4).cgPath
+        traceLayer.fillColor   = UIColor.clear.cgColor
+        traceLayer.strokeColor = UIColor(red: 0.75, green: 0.75, blue: 0.75, alpha: 1).cgColor
+        traceLayer.lineWidth   = 1.5
+        traceLayer.lineCap     = .round
+        traceLayer.opacity     = 0
+        layer.addSublayer(traceLayer)
+
+        addTarget(self, action: #selector(handleTap), for: .touchUpInside)
     }
 
-    func handleTap() {
-        if isSelected {
-            isSelected = false
+    private func checkImage(checked: Bool) -&gt; UIImage? {
+        UIImage(systemName: checked ? "checkmark.square.fill" : "square",
+                withConfiguration: UIImage.SymbolConfiguration(pointSize: 20))?
+            .withRenderingMode(.alwaysTemplate)
+    }
+
+    private func startTrace() {
+        traceStartTime = CACurrentMediaTime()
+        traceLayer.opacity = 1; imageView.alpha = 0
+
+        let draw = CABasicAnimation(keyPath: "strokeEnd")
+        draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.6
+        draw.timingFunction = CAMediaTimingFunction(controlPoints: 0, 0, 0, 1)
+
+        let erase = CABasicAnimation(keyPath: "strokeStart")
+        erase.fromValue = 0; erase.toValue = 1; erase.beginTime = 0.6; erase.duration = 0.6
+        erase.timingFunction = CAMediaTimingFunction(controlPoints: 0.3, 0, 1, 1)
+
+        let group = CAAnimationGroup()
+        group.animations = [draw, erase]
+        group.duration = 1.2; group.repeatCount = .infinity; group.isRemovedOnCompletion = false
+        traceLayer.add(group, forKey: "checkboxTrace")
+    }
+
+    private func waitForCycleThenSucceed() {
+        let elapsed   = (CACurrentMediaTime() - traceStartTime).truncatingRemainder(dividingBy: 1.2)
+        let remaining = max(0.05, 1.2 - elapsed)
+        DispatchQueue.main.asyncAfter(deadline: .now() + remaining) { self.succeed() }
+    }
+
+    private func succeed() {
+        isLoading = false
+        traceLayer.removeAnimation(forKey: "checkboxTrace")
+        UIView.animate(withDuration: 0.1) { self.traceLayer.opacity = 0; self.imageView.alpha = 1 }
+        isChecked = true
+        imageView.image     = checkImage(checked: true)
+        imageView.tintColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+        UIView.animate(withDuration: 0.2, delay: 0,
+                       usingSpringWithDamping: 0.6, initialSpringVelocity: 0, options: []) {
+            self.imageView.transform = CGAffineTransform(scaleX: 1.06, y: 1.06)
+        } completion: { _ in
+            UIView.animate(withDuration: 0.15, delay: 0,
+                           usingSpringWithDamping: 0.6, initialSpringVelocity: 0, options: []) {
+                self.imageView.transform = .identity
+            }
+        }
+        sendActions(for: .valueChanged)
+    }
+
+    @objc private func handleTap() {
+        if isChecked {
+            isChecked = false
+            imageView.image     = checkImage(checked: false)
+            imageView.tintColor = UIColor(red: 0.75, green: 0.75, blue: 0.75, alpha: 1)
             return
         }
-
-        pressHaptic.impactOccurred()
-        withAnimation(.easeOut(duration: 0.1)) { scale = 0.95 }
+        guard !isLoading else { return }
         isLoading = true
-
+        pressHaptic.impactOccurred()
+        UIView.animate(withDuration: 0.1) {
+            self.imageView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        }
+        startTrace()
         Task {
-            do {
-                try await api.confirmSelection(itemId)   // реальний виклик
-                await MainActor.run {
-                    isLoading = false
-                    isSelected = true
-                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) { scale = 1.06 }
-                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6).delay(0.15)) { scale = 1 }
-                }
-            } catch {
-                await MainActor.run {
-                    isLoading = false
-                    // shake / toast — сценарій "Обробка помилок"
-                }
-            }
+            try? await api.confirmSelection(itemId)
+            await MainActor.run { [weak self] in self?.waitForCycleThenSucceed() }
         }
     }
 }</pre>
@@ -970,7 +1092,7 @@ fun SelectableCheckbox(itemId: String) {
         <div class="code-tabs">
         <div class="tab-buttons">
           <button class="tab-btn active" data-tab="web">Web</button>
-          <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+          <button class="tab-btn" data-tab="ios">iOS · UIKit</button>
           <button class="tab-btn" data-tab="android">Android · Compose</button>
         </div>
 
@@ -1044,47 +1166,102 @@ const controllers = rows.map((row) =&gt;
   wireRadioRow(row, () =&gt; controllers.forEach((c) =&gt; c !== current &amp;&amp; c.deselect()))
 );</pre>
 
-        <pre class="tab-panel" data-panel="ios">// Використовується як рядок у List(items) { item in RadioRow(...) },
-// isSelected прив'язаний до spільного @State selectedID у батьківській View
-struct RadioRow: View {
-    let isSelected: Bool
-    let onSelect: () -&gt; Void
-    @State private var isLoading = false
-    @State private var scale: CGFloat = 1
+        <pre class="tab-panel" data-panel="ios">// Використовується як рядок у tableView; isRadioSelected і onSelect — ззовні
+class RadioControl: UIControl {
+    var itemId: String = ""
+    var isRadioSelected = false { didSet { updateAppearance() } }
+    var onSelect: (() -&gt; Void)?
+    private var isLoading = false
+    private var traceStartTime: CFTimeInterval = 0
+    private let pressHaptic = UIImpactFeedbackGenerator(style: .light)
 
-    let pressHaptic = UIImpactFeedbackGenerator(style: .light)
+    private let imageView  = UIImageView()
+    private let traceLayer = CAShapeLayer()
 
-    var body: some View {
-        ZStack {
-            if isLoading {
-                Circle()
-                    .trim(from: 0, to: 0.25)
-                    .stroke(Color(hex: "BFBFBF"), lineWidth: 1.5)
-                    .frame(width: 20, height: 20)
-                    .rotationEffect(.degrees(isLoading ? 360 : 0))
-                    .animation(.linear(duration: 0.6).repeatForever(autoreverses: false), value: isLoading)
-            } else {
-                Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
-                    .font(.system(size: 20))
-                    .foregroundStyle(isSelected ? Color(hex: "212121") : Color(hex: "BFBFBF"))
-                    .scaleEffect(scale)
+    override init(frame: CGRect) { super.init(frame: frame); setup() }
+    required init?(coder: NSCoder) { super.init(coder: coder); setup() }
+
+    private func setup() {
+        frame.size = CGSize(width: 44, height: 44)
+        imageView.frame       = CGRect(x: 12, y: 12, width: 20, height: 20)
+        imageView.contentMode = .scaleAspectFit
+        addSubview(imageView)
+
+        traceLayer.frame       = imageView.frame
+        traceLayer.path        = UIBezierPath(ovalIn: CGRect(x: 1, y: 1, width: 18, height: 18)).cgPath
+        traceLayer.fillColor   = UIColor.clear.cgColor
+        traceLayer.strokeColor = UIColor(red: 0.75, green: 0.75, blue: 0.75, alpha: 1).cgColor
+        traceLayer.lineWidth   = 1.5; traceLayer.lineCap = .round
+        traceLayer.opacity     = 0
+        layer.addSublayer(traceLayer)
+
+        addTarget(self, action: #selector(handleTap), for: .touchUpInside)
+        updateAppearance()
+    }
+
+    private func updateAppearance() {
+        let name = isRadioSelected ? "largecircle.fill.circle" : "circle"
+        let tint = isRadioSelected
+            ? UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+            : UIColor(red: 0.75, green: 0.75, blue: 0.75, alpha: 1)
+        imageView.image = UIImage(systemName: name,
+            withConfiguration: UIImage.SymbolConfiguration(pointSize: 20))?.withRenderingMode(.alwaysTemplate)
+        imageView.tintColor = tint
+    }
+
+    private func startTrace() {
+        traceStartTime = CACurrentMediaTime()
+        traceLayer.opacity = 1; imageView.alpha = 0
+
+        let draw = CABasicAnimation(keyPath: "strokeEnd")
+        draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.6
+        draw.timingFunction = CAMediaTimingFunction(controlPoints: 0, 0, 0, 1)
+
+        let erase = CABasicAnimation(keyPath: "strokeStart")
+        erase.fromValue = 0; erase.toValue = 1; erase.beginTime = 0.6; erase.duration = 0.6
+        erase.timingFunction = CAMediaTimingFunction(controlPoints: 0.3, 0, 1, 1)
+
+        let group = CAAnimationGroup()
+        group.animations = [draw, erase]
+        group.duration = 1.2; group.repeatCount = .infinity; group.isRemovedOnCompletion = false
+        traceLayer.add(group, forKey: "radioTrace")
+    }
+
+    private func waitForCycleThenSucceed() {
+        let elapsed   = (CACurrentMediaTime() - traceStartTime).truncatingRemainder(dividingBy: 1.2)
+        let remaining = max(0.05, 1.2 - elapsed)
+        DispatchQueue.main.asyncAfter(deadline: .now() + remaining) { self.succeed() }
+    }
+
+    private func succeed() {
+        isLoading = false
+        traceLayer.removeAnimation(forKey: "radioTrace")
+        UIView.animate(withDuration: 0.1) { self.traceLayer.opacity = 0; self.imageView.alpha = 1 }
+        isRadioSelected = true       // викликає updateAppearance()
+        onSelect?()                  // батьківський контролер знімає вибір з інших
+        UIView.animate(withDuration: 0.2, delay: 0,
+                       usingSpringWithDamping: 0.6, initialSpringVelocity: 0, options: []) {
+            self.imageView.transform = CGAffineTransform(scaleX: 1.06, y: 1.06)
+        } completion: { _ in
+            UIView.animate(withDuration: 0.15, delay: 0,
+                           usingSpringWithDamping: 0.6, initialSpringVelocity: 0, options: []) {
+                self.imageView.transform = .identity
             }
         }
-        .onTapGesture {
-            guard !isSelected else { return }   // radio: не реагує на вже обраний
-            pressHaptic.impactOccurred()
-            withAnimation(.easeOut(duration: 0.1)) { scale = 0.95 }
-            isLoading = true
+        sendActions(for: .valueChanged)
+    }
 
-            Task {
-                try? await api.selectOption(itemId)     // реальний виклик
-                await MainActor.run {
-                    isLoading = false
-                    onSelect()                            // батьківська View знімає інші
-                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) { scale = 1.06 }
-                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6).delay(0.15)) { scale = 1 }
-                }
-            }
+    @objc private func handleTap() {
+        guard !isRadioSelected, !isLoading else { return } // radio: вже обраний — ігнорує
+        isLoading = true
+        pressHaptic.impactOccurred()
+        UIView.animate(withDuration: 0.1) {
+            self.imageView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        }
+        startTrace()
+        Task {
+            try? await api.selectOption(itemId)
+            await MainActor.run { [weak self] in self?.waitForCycleThenSucceed() }
         }
     }
 }</pre>
@@ -1197,7 +1374,7 @@ fun RadioRow(itemId: String, isSelected: Boolean, onSelect: () -&gt; Unit) {
         <div class="code-tabs">
         <div class="tab-buttons">
           <button class="tab-btn active" data-tab="web">Web</button>
-          <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+          <button class="tab-btn" data-tab="ios">iOS · UIKit</button>
           <button class="tab-btn" data-tab="android">Android · Compose</button>
         </div>
 
@@ -1268,47 +1445,92 @@ btn.addEventListener('click', () =&gt; {
   });
 });</pre>
 
-        <pre class="tab-panel" data-panel="ios">struct SettingToggle: View {
-    @State private var isOn = false
-    @State private var isLoading = false
+        <pre class="tab-panel" data-panel="ios">class EVAToggleView: UIControl {
+    private(set) var isOn = false
+    private var isLoading = false
+    private let pressHaptic = UIImpactFeedbackGenerator(style: .light)
 
-    let pressHaptic = UIImpactFeedbackGenerator(style: .light)
+    private let trackView = UIView()
+    private let knobView  = UIView()
 
-    var body: some View {
-        ZStack {
-            Capsule()
-                .strokeBorder(Color(hex: "E5E5E5"), lineWidth: 1.5)
-                .background(Capsule().fill(isOn ? Color(hex: "D9F2BF") : .clear))
-                .frame(width: 48, height: 24)
+    private let trackW: CGFloat = 48, trackH: CGFloat = 24
+    private let knobSize: CGFloat = 20, knobInset: CGFloat = 2
 
-            HStack {
-                if isOn { Spacer() }
-                Circle()
-                    .fill(isOn ? Color(hex: "76BF44") : Color(hex: "AFAFAF"))
-                    .frame(width: 20, height: 20)
-                    .scaleEffect(isLoading ? 0.8 : 1)
-                    .opacity(isLoading ? 0.5 : 1)
-                    .animation(
-                        isLoading ? .easeInOut(duration: 0.5).repeatForever(autoreverses: true) : .default,
-                        value: isLoading
-                    )
-                if !isOn { Spacer() }
-            }
-            .padding(2)
+    override init(frame: CGRect) { super.init(frame: frame); setup() }
+    required init?(coder: NSCoder) { super.init(coder: coder); setup() }
+
+    private func setup() {
+        frame.size = CGSize(width: trackW, height: trackH)
+
+        trackView.frame              = bounds
+        trackView.layer.cornerRadius = trackH / 2
+        trackView.layer.borderWidth  = 1.5
+        trackView.layer.borderColor  = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1).cgColor
+        addSubview(trackView)
+
+        knobView.frame               = CGRect(x: knobInset, y: knobInset, width: knobSize, height: knobSize)
+        knobView.layer.cornerRadius  = knobSize / 2
+        knobView.backgroundColor     = UIColor(red: 0.69, green: 0.69, blue: 0.69, alpha: 1)
+        addSubview(knobView)
+
+        addTarget(self, action: #selector(handleTap), for: .touchUpInside)
+    }
+
+    private func applyState(animated: Bool) {
+        let knobX     = isOn ? (trackW - knobSize - knobInset) : knobInset
+        let trackBg   = isOn ? UIColor(red: 0.85, green: 0.95, blue: 0.75, alpha: 1) : UIColor.clear
+        let knobColor = isOn ? UIColor(red: 0.46, green: 0.75, blue: 0.27, alpha: 1)
+                              : UIColor(red: 0.69, green: 0.69, blue: 0.69, alpha: 1)
+        let apply = {
+            self.trackView.backgroundColor  = trackBg
+            self.knobView.backgroundColor   = knobColor
+            self.knobView.frame = CGRect(x: knobX, y: self.knobInset,
+                                         width: self.knobSize, height: self.knobSize)
         }
-        .onTapGesture {
-            let turningOn = !isOn
-            pressHaptic.impactOccurred()
-            isLoading = true
+        if animated {
+            UIView.animate(withDuration: 0.2, delay: 0,
+                           usingSpringWithDamping: 0.7, initialSpringVelocity: 0, options: []) { apply() }
+        } else { apply() }
+    }
 
-            Task {
-                try? await api.updateSetting(turningOn)   // реальний виклик
-                await MainActor.run {
-                    isLoading = false
-                    withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
-                        isOn = turningOn
-                    }
-                }
+    // "Дихання" кульки під час завантаження — замість trace-кільця:
+    // на 20px-елементі обертовий спінер виглядає брудно (CLAUDE.md),
+    // тому scale+opacity пульсація в циклі.
+    private func startBreathing() {
+        let scale = CABasicAnimation(keyPath: "transform.scale")
+        scale.fromValue = 1; scale.toValue = 0.8; scale.duration = 0.5
+        scale.autoreverses = true; scale.repeatCount = .infinity
+        scale.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+
+        let opacity = CABasicAnimation(keyPath: "opacity")
+        opacity.fromValue = 1; opacity.toValue = 0.5; opacity.duration = 0.5
+        opacity.autoreverses = true; opacity.repeatCount = .infinity
+        opacity.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+
+        let group = CAAnimationGroup()
+        group.animations = [scale, opacity]; group.duration = 0.5
+        group.repeatCount = .infinity; group.isRemovedOnCompletion = false
+        knobView.layer.add(group, forKey: "breathe")
+    }
+
+    private func stopBreathing() { knobView.layer.removeAnimation(forKey: "breathe") }
+
+    @objc private func handleTap() {
+        guard !isLoading else { return }
+        let turningOn = !isOn
+        pressHaptic.impactOccurred()
+        isLoading = true
+        startBreathing()
+
+        Task {
+            try? await api.updateSetting(turningOn)
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.isLoading = false
+                self.stopBreathing()
+                self.isOn = turningOn
+                self.applyState(animated: true)
+                self.sendActions(for: .valueChanged)
             }
         }
     }
@@ -1408,7 +1630,7 @@ fun SettingToggle() {
         <div class="code-tabs">
         <div class="tab-buttons">
           <button class="tab-btn active" data-tab="web">Web</button>
-          <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+          <button class="tab-btn" data-tab="ios">iOS · UIKit</button>
           <button class="tab-btn" data-tab="android">Android · Compose</button>
         </div>
 
@@ -1467,52 +1689,119 @@ track.addEventListener('click', (e) =&gt; {
   setValue(nearest, px);
 });</pre>
 
-        <pre class="tab-panel" data-panel="ios">struct RangeSlider: View {
-    @State private var minValue: CGFloat = 0.0
-    @State private var maxValue: CGFloat = 0.5
-    @State private var draggingMin = false
-    @State private var draggingMax = false
+        <pre class="tab-panel" data-panel="ios">class EVARangeSlider: UIView {
+    private(set) var minValue: CGFloat = 0.0
+    private(set) var maxValue: CGFloat = 0.5
+    var onValueChange: ((CGFloat, CGFloat) -&gt; Void)?
 
-    let trackWidth: CGFloat = 288
+    private let trackView = UIView()
+    private let fillView  = UIView()
+    private let minThumb  = RangeThumb()
+    private let maxThumb  = RangeThumb()
 
-    var body: some View {
-        ZStack(alignment: .leading) {
-            Capsule().fill(Color(hex: "EBEBEB")).frame(height: 8)
-            Capsule().fill(Color(hex: "76BF44"))
-                .frame(width: (maxValue - minValue) * trackWidth, height: 8)
-                .offset(x: minValue * trackWidth)
+    private let trackH:    CGFloat = 8
+    private let thumbSize: CGFloat = 22
+    private let edgeInset: CGFloat = 12
 
-            thumb(value: $minValue, isDragging: $draggingMin, otherValue: maxValue, isMin: true)
-            thumb(value: $maxValue, isDragging: $draggingMax, otherValue: minValue, isMin: false)
+    private var usableWidth: CGFloat { bounds.width - edgeInset * 2 }
+    private func px(_ v: CGFloat) -&gt; CGFloat { edgeInset + v * usableWidth }
+
+    override init(frame: CGRect) { super.init(frame: frame); setup() }
+    required init?(coder: NSCoder) { super.init(coder: coder); setup() }
+
+    private func setup() {
+        trackView.backgroundColor  = UIColor(red: 0.92, green: 0.92, blue: 0.92, alpha: 1)
+        trackView.layer.cornerRadius = trackH / 2
+        addSubview(trackView)
+
+        fillView.backgroundColor   = UIColor(red: 0.46, green: 0.75, blue: 0.27, alpha: 1)
+        fillView.layer.cornerRadius = trackH / 2
+        addSubview(fillView)
+
+        for (thumb, sel) in [(minThumb, #selector(handleMinPan)), (maxThumb, #selector(handleMaxPan))] {
+            addSubview(thumb)
+            thumb.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: sel))
         }
-        .frame(width: trackWidth, height: 24)
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTrackTap))
+        trackView.addGestureRecognizer(tap)
     }
 
-    func thumb(value: Binding&lt;CGFloat&gt;, isDragging: Binding&lt;Bool&gt;, otherValue: CGFloat, isMin: Bool) -&gt; some View {
-        Circle()
-            .fill(.white)
-            .frame(width: 22, height: 22)
-            .overlay(Circle().stroke(isDragging.wrappedValue ? Color(hex: "76BF44") : Color(hex: "D8D8D8"), lineWidth: 2))
-            .scaleEffect(isDragging.wrappedValue ? 1.2 : 1)
-            .shadow(color: .black.opacity(isDragging.wrappedValue ? 0.22 : 0), radius: 4, y: 2)
-            .offset(x: value.wrappedValue * trackWidth - trackWidth / 2)
-            // Під час активного drag — без withAnimation, рух 1:1 з пальцем.
-            // Пружний withAnimation лишається тільки для програмних стрибків.
-            .animation(isDragging.wrappedValue ? nil : .spring(response: 0.25, dampingFraction: 0.7), value: value.wrappedValue)
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { g in
-                        isDragging.wrappedValue = true
-                        let raw = (g.location.x + trackWidth / 2) / trackWidth
-                        value.wrappedValue = isMin
-                            ? min(max(0, raw), otherValue - 0.06)
-                            : max(min(1, raw), otherValue + 0.06)
-                    }
-                    .onEnded { _ in
-                        isDragging.wrappedValue = false
-                        withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {}
-                    }
-            )
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let midY = bounds.midY
+        trackView.frame = CGRect(x: 0, y: midY - trackH / 2, width: bounds.width, height: trackH)
+        updatePositions(animated: false)
+    }
+
+    private func updatePositions(animated: Bool) {
+        let minX = px(minValue), maxX = px(maxValue)
+        let apply = {
+            self.fillView.frame = CGRect(x: minX, y: self.trackView.frame.minY,
+                                         width: maxX - minX, height: self.trackH)
+            self.minThumb.center = CGPoint(x: minX, y: self.bounds.midY)
+            self.maxThumb.center = CGPoint(x: maxX, y: self.bounds.midY)
+        }
+        if animated {
+            // spring-transition тільки для програмних стрибків (клік по треку)
+            UIView.animate(withDuration: 0.25, delay: 0,
+                           usingSpringWithDamping: 0.7, initialSpringVelocity: 0, options: []) { apply() }
+        } else { apply() }
+    }
+
+    @objc private func handleMinPan(_ g: UIPanGestureRecognizer) { handleDrag(g, isMin: true) }
+    @objc private func handleMaxPan(_ g: UIPanGestureRecognizer) { handleDrag(g, isMin: false) }
+
+    private func handleDrag(_ g: UIPanGestureRecognizer, isMin: Bool) {
+        let thumb = isMin ? minThumb : maxThumb
+        switch g.state {
+        case .began:
+            thumb.setGrabbing(true)
+        case .changed:
+            // 1:1 з пальцем — transition вимкнено
+            let raw = (g.location(in: self).x - edgeInset) / usableWidth
+            if isMin { minValue = max(0, min(raw, maxValue - 0.06)) }
+            else      { maxValue = min(1, max(raw, minValue + 0.06)) }
+            updatePositions(animated: false)
+            onValueChange?(minValue, maxValue)
+        case .ended, .cancelled:
+            thumb.setGrabbing(false)
+        default: break
+        }
+    }
+
+    @objc private func handleTrackTap(_ g: UITapGestureRecognizer) {
+        let raw   = (g.location(in: self).x - edgeInset) / usableWidth
+        let minX  = px(minValue), maxX = px(maxValue), tapX = g.location(in: self).x
+        if abs(tapX - minX) &lt; abs(tapX - maxX) { minValue = max(0, min(raw, maxValue - 0.06)) }
+        else                                    { maxValue = min(1, max(raw, minValue + 0.06)) }
+        updatePositions(animated: true)           // spring-стрибок при кліку по треку
+        onValueChange?(minValue, maxValue)
+    }
+}
+
+private class RangeThumb: UIView {
+    init() {
+        super.init(frame: CGRect(x: 0, y: 0, width: 22, height: 22))
+        backgroundColor        = .white
+        layer.cornerRadius     = 11
+        layer.borderWidth      = 2
+        layer.borderColor      = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1).cgColor
+        layer.shadowColor      = UIColor.black.cgColor
+        layer.shadowOpacity    = 0
+        layer.shadowOffset     = CGSize(width: 0, height: 2)
+        layer.shadowRadius     = 4
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    func setGrabbing(_ on: Bool) {
+        UIView.animate(withDuration: 0.1) {
+            self.transform       = on ? CGAffineTransform(scaleX: 1.2, y: 1.2) : .identity
+            self.layer.borderColor = on
+                ? UIColor(red: 0.46, green: 0.75, blue: 0.27, alpha: 1).cgColor
+                : UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1).cgColor
+            self.layer.shadowOpacity = on ? 0.22 : 0
+        }
     }
 }</pre>
 
@@ -1637,7 +1926,7 @@ fun RangeSlider() {
         <div class="code-tabs">
           <div class="tab-buttons">
             <button class="tab-btn active" data-tab="web">Web</button>
-            <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+            <button class="tab-btn" data-tab="ios">iOS · UIKit</button>
             <button class="tab-btn" data-tab="android">Android · Compose</button>
           </div>
 
@@ -1722,72 +2011,134 @@ menu.querySelectorAll('.dd-item').forEach((item) =&gt; {
   });
 });</pre>
 
-          <pre class="tab-panel" data-panel="ios">struct EVADropdown: View {
-    let options: [String]
-    @State private var isOpen = false
-    @State private var selected: String? = nil
+          <pre class="tab-panel" data-panel="ios">class EVADropdownView: UIView {
+    var options: [String] = [] { didSet { buildMenuRows() } }
+    private(set) var selected: String?
+    var onSelect: ((String) -&gt; Void)?
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // Тригер
-            Button {
-                withAnimation(.easeInOut(duration: 0.25)) { isOpen.toggle() }
-            } label: {
-                HStack(spacing: 8) {
-                    Text(selected ?? "Select")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Color(hex: "212121"))
-                    Spacer()
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(hex: "212121"))
-                        // Chevron крутиться 180° при відкритті
-                        .rotationEffect(.degrees(isOpen ? 180 : 0))
-                        .animation(.easeInOut(duration: 0.25), value: isOpen)
-                }
-                .padding(.horizontal, 16)
-                .frame(height: 40)
-                .background(.white)
-                // Рамка товщає при відкритті (1.5 → 2 pt)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color(hex: "D8D8D8"), lineWidth: isOpen ? 2 : 1.5)
-                        .animation(.easeInOut(duration: 0.1), value: isOpen)
-                )
-                .cornerRadius(8)
-            }
-            .buttonStyle(.plain)
+    private var isOpen = false
+    private let triggerBtn   = UIButton(type: .system)
+    private let chevronView  = UIImageView()
+    private let menuCard     = UIView()
+    private let menuStack    = UIStackView()
 
-            // Меню — відкривається через clipShape + opacity
-            if isOpen {
-                VStack(spacing: 0) {
-                    ForEach(Array(options.enumerated()), id: \.offset) { idx, opt in
-                        Button {
-                            selected = opt
-                            withAnimation(.easeInOut(duration: 0.15)) { isOpen = false }
-                        } label: {
-                            HStack { Text(opt).font(.system(size: 16)); Spacer() }
-                            .padding(.horizontal, 12)
-                            .frame(height: 40)
-                            .background(.white)
-                        }
-                        .buttonStyle(.plain)
-                        // Рядки проявляються з невеликим стагером
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                        .animation(
-                            .easeOut(duration: 0.2).delay(Double(idx) * 0.03),
-                            value: isOpen
-                        )
-                    }
-                }
-                .background(.white)
-                .cornerRadius(8)
-                .shadow(color: .black.opacity(0.06), radius: 6, y: 2)
-                .shadow(color: .black.opacity(0.10), radius: 16, y: 4)
-                .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
+    override init(frame: CGRect) { super.init(frame: frame); setup() }
+    required init?(coder: NSCoder) { super.init(coder: coder); setup() }
+
+    private func setup() {
+        bounds.size.width = 220
+
+        triggerBtn.setTitle("Select", for: .normal)
+        triggerBtn.setTitleColor(UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1), for: .normal)
+        triggerBtn.titleLabel?.font        = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        triggerBtn.contentHorizontalAlignment = .left
+        triggerBtn.contentEdgeInsets       = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 40)
+        triggerBtn.backgroundColor         = .white
+        triggerBtn.layer.cornerRadius      = 8
+        triggerBtn.layer.borderWidth       = 1.5
+        triggerBtn.layer.borderColor       = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1).cgColor
+        triggerBtn.addTarget(self, action: #selector(toggle), for: .touchUpInside)
+        addSubview(triggerBtn)
+
+        let cfg = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
+        chevronView.image       = UIImage(systemName: "chevron.down", withConfiguration: cfg)
+        chevronView.tintColor   = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+        chevronView.contentMode = .center
+        addSubview(chevronView)
+
+        menuCard.backgroundColor        = .white
+        menuCard.layer.cornerRadius     = 8
+        menuCard.layer.shadowColor      = UIColor.black.cgColor
+        menuCard.layer.shadowOpacity    = 0.1
+        menuCard.layer.shadowOffset     = CGSize(width: 0, height: 4)
+        menuCard.layer.shadowRadius     = 16
+        menuCard.clipsToBounds          = false
+        menuCard.alpha                  = 0
+        menuCard.transform              = CGAffineTransform(scaleX: 1, y: 0.97)
+                                            .translatedBy(x: 0, y: -4)
+        menuCard.isHidden               = true
+        addSubview(menuCard)
+
+        menuStack.axis = .vertical
+        menuCard.addSubview(menuStack)
+
+        updateLayout()
+    }
+
+    private func buildMenuRows() {
+        menuStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        options.enumerated().forEach { idx, opt in
+            let btn = UIButton(type: .system)
+            btn.setTitle(opt, for: .normal)
+            btn.setTitleColor(UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1), for: .normal)
+            btn.titleLabel?.font              = UIFont.systemFont(ofSize: 16)
+            btn.contentHorizontalAlignment    = .left
+            btn.contentEdgeInsets             = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
+            btn.backgroundColor               = .white
+            btn.tag = idx
+            btn.addTarget(self, action: #selector(pickOption), for: .touchUpInside)
+            btn.heightAnchor.constraint(equalToConstant: 40).isActive = true
+            menuStack.addArrangedSubview(btn)
+        }
+        updateLayout()
+    }
+
+    private func updateLayout() {
+        let menuH = CGFloat(options.count) * 40
+        triggerBtn.frame = CGRect(x: 0, y: 0, width: 220, height: 40)
+        chevronView.frame = CGRect(x: 192, y: 10, width: 20, height: 20)
+        menuCard.frame    = CGRect(x: 0, y: 44, width: 220, height: menuH)
+        menuStack.frame   = menuCard.bounds
+        frame.size        = CGSize(width: 220, height: isOpen ? 44 + 4 + menuH : 40)
+    }
+
+    @objc private func toggle() { isOpen ? close() : open() }
+
+    private func open() {
+        isOpen = true
+        menuCard.isHidden = false
+        // Рамка тригера товщає: 1.5→2pt
+        UIView.animate(withDuration: 0.1) { self.triggerBtn.layer.borderWidth = 2 }
+        // Chevron обертається 180° при відкритті
+        UIView.animate(withDuration: 0.25, options: .curveEaseInOut) {
+            self.chevronView.transform = CGAffineTransform(rotationAngle: .pi)
+        }
+        UIView.animate(withDuration: 0.25, delay: 0,
+                       usingSpringWithDamping: 0.75, initialSpringVelocity: 0, options: []) {
+            self.menuCard.alpha = 1
+            self.menuCard.transform = .identity
+        }
+        // Стагер появи рядків меню
+        menuStack.arrangedSubviews.enumerated().forEach { idx, row in
+            row.alpha = 0
+            UIView.animate(withDuration: 0.2, delay: 0.05 + Double(idx) * 0.03, options: []) {
+                row.alpha = 1
             }
         }
-        .frame(width: 220)
+        updateLayout()
+    }
+
+    private func close() {
+        isOpen = false
+        UIView.animate(withDuration: 0.1) { self.triggerBtn.layer.borderWidth = 1.5 }
+        UIView.animate(withDuration: 0.25, options: .curveEaseInOut) {
+            self.chevronView.transform = .identity
+        }
+        UIView.animate(withDuration: 0.15, options: .curveEaseIn) {
+            self.menuCard.alpha     = 0
+            self.menuCard.transform = CGAffineTransform(scaleX: 1, y: 0.97)
+        } completion: { _ in
+            self.menuCard.isHidden = true
+            self.updateLayout()
+        }
+    }
+
+    @objc private func pickOption(_ sender: UIButton) {
+        let opt = options[sender.tag]
+        selected = opt
+        triggerBtn.setTitle(opt, for: .normal)
+        onSelect?(opt)
+        close()
     }
 }</pre>
 
@@ -1922,11 +2273,8 @@ fun EVADropdown(options: List&lt;String&gt;) {
             <div class="cart-wrap" id="cartWrap">
               <button class="cart-btn is-good" id="cartBtn" aria-pressed="false" aria-label="Додати до кошика">
                 <span class="cart-icon-slot">
-                  <svg class="cart-spinner" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="8" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-                    <circle cx="10" cy="10" r="8" stroke="white" stroke-width="1.5" stroke-dasharray="13 39" stroke-linecap="round"/>
-                  </svg>
-                  <svg class="cart-svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <svg class="cart-trace" id="cartTrace" width="20" height="20" viewBox="0 0 20 20" fill="none"></svg>
+                  <svg class="cart-svg" id="cartSvg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M13 6C13 4.34 11.66 3 10 3C8.34 3 7 4.34 7 6"/>
                     <path d="M3 8L3.7 15.19C3.8 16.22 4.66 17 5.69 17H14.31C15.34 17 16.2 16.22 16.3 15.19L17 8"/>
                     <line class="ci-line" x1="3" y1="11.5" x2="17" y2="11.5"/>
@@ -1963,7 +2311,7 @@ fun EVADropdown(options: List&lt;String&gt;) {
         <div class="code-tabs">
           <div class="tab-buttons">
             <button class="tab-btn active" data-tab="web">Web</button>
-            <button class="tab-btn" data-tab="ios">iOS · SwiftUI</button>
+            <button class="tab-btn" data-tab="ios">iOS · UIKit</button>
             <button class="tab-btn" data-tab="android">Android · Compose</button>
           </div>
 
@@ -2053,73 +2401,224 @@ function succeed() {
   burst(wrap);                             // 8 зелених частинок
 }</pre>
 
-          <pre class="tab-panel" data-panel="ios">struct AddToCartButton: View {
+          <pre class="tab-panel" data-panel="ios">class AddToCartButton: UIControl {
     let productId: String
-    @State private var inCart = false
-    @State private var isLoading = false
-    @State private var scale: CGFloat = 1
+    private var inCart    = false
+    private var isLoading = false
+    private var traceStartTime: CFTimeInterval = 0
+    private let pressHaptic   = UIImpactFeedbackGenerator(style: .medium)
+    private let successHaptic = UINotificationFeedbackGenerator()
 
-    let pressHaptic = UIImpactFeedbackGenerator(style: .medium)
-    let successHaptic = UINotificationFeedbackGenerator()
+    private let iconSlot    = UIView()
+    private let iconView    = UIImageView()
+    private let labelView   = UILabel()
+    // Trace: силует кошика — CAShapeLayer, цикл 1.6s, аналогічний веб-версії
+    private let traceLayer  = CAShapeLayer()
+    // Checkmark: strokeEnd 0→1 при успіху (одноразово)
+    private let checkLayer  = CAShapeLayer()
 
-    var body: some View {
-        Button { handleTap() } label: {
-            HStack(spacing: 8) {
-                if isLoading {
-                    // Дуга, що обертається — замість іконки під час очікування
-                    Circle()
-                        .trim(from: 0, to: 0.25)
-                        .stroke(Color.white, lineWidth: 1.5)
-                        .frame(width: 20, height: 20)
-                        .rotationEffect(.degrees(isLoading ? 360 : 0))
-                        .animation(
-                            .linear(duration: 0.8).repeatForever(autoreverses: false),
-                            value: isLoading
-                        )
-                } else {
-                    Image(systemName: inCart ? "cart.badge.checkmark" : "cart")
-                        .font(.system(size: 16))
-                }
-                Text(inCart ? "У кошику" : "До кошика")
-                    .font(.system(size: 14, weight: .semibold))
-            }
-            .foregroundColor(inCart ? Color(hex: "212121") : .white)
-            .frame(height: 40)
-            .padding(.horizontal, 16)
-            // Фон і обведення переходять через withAnimation нижче
-            .background(inCart ? Color.white : Color(hex: "212121"))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(hex: "212121"), lineWidth: 1.5)
-            )
-            .cornerRadius(8)
-            .scaleEffect(scale)
-        }
-        .buttonStyle(.plain)
-        .disabled(inCart)
+    init(productId: String) {
+        self.productId = productId
+        super.init(frame: .zero)
+        setup()
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    private func setup() {
+        backgroundColor        = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+        layer.cornerRadius     = 8
+        layer.borderWidth      = 1.5
+        layer.borderColor      = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1).cgColor
+
+        iconSlot.frame                 = CGRect(x: 16, y: 10, width: 20, height: 20)
+        iconSlot.isUserInteractionEnabled = false
+        addSubview(iconSlot)
+
+        iconView.frame         = iconSlot.bounds
+        iconView.contentMode   = .scaleAspectFit
+        iconView.tintColor     = .white
+        iconView.image = UIImage(systemName: "cart",
+            withConfiguration: UIImage.SymbolConfiguration(pointSize: 16))?.withRenderingMode(.alwaysTemplate)
+        iconSlot.addSubview(iconView)
+
+        // Trace по силуету кошика (handle + body) — той самий контур, що й у веб
+        traceLayer.frame       = iconSlot.bounds
+        traceLayer.path        = cartSilhouettePath()
+        traceLayer.fillColor   = UIColor.clear.cgColor
+        traceLayer.strokeColor = UIColor.white.cgColor
+        traceLayer.lineWidth   = 1.5; traceLayer.lineCap = .round; traceLayer.lineJoin = .round
+        traceLayer.opacity     = 0
+        iconSlot.layer.addSublayer(traceLayer)
+
+        // Галочка: прихована, промальовується strokeEnd 0→1 при успіху
+        checkLayer.frame       = iconSlot.bounds
+        checkLayer.path        = checkmarkPath()
+        checkLayer.fillColor   = UIColor.clear.cgColor
+        checkLayer.strokeColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1).cgColor
+        checkLayer.lineWidth   = 1.5; checkLayer.lineCap = .round; checkLayer.lineJoin = .round
+        checkLayer.strokeEnd   = 0; checkLayer.opacity = 0
+        iconSlot.layer.addSublayer(checkLayer)
+
+        labelView.text      = "До кошика"
+        labelView.font      = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        labelView.textColor = .white
+        labelView.sizeToFit()
+        addSubview(labelView)
+
+        frame.size = sizeThatFits(.zero)
+        addTarget(self, action: #selector(handleTap), for: .touchUpInside)
     }
 
-    func handleTap() {
-        pressHaptic.impactOccurred()
-        withAnimation(.easeOut(duration: 0.1)) { scale = 0.97 }
-        withAnimation(.easeOut(duration: 0.1).delay(0.1)) { scale = 1 }
+    override func sizeThatFits(_ size: CGSize) -&gt; CGSize {
+        labelView.sizeToFit()
+        return CGSize(width: 16 + 20 + 8 + ceil(labelView.bounds.width) + 16, height: 40)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        iconSlot.frame  = CGRect(x: 16, y: 10, width: 20, height: 20)
+        labelView.sizeToFit()
+        labelView.center = CGPoint(x: 16 + 20 + 8 + labelView.bounds.width / 2,
+                                   y: bounds.midY)
+    }
+
+    // Силует кошика 20×20, startPoint = нижній лівий кут (трейс-конвенція)
+    private func cartSilhouettePath() -&gt; CGPath {
+        let p = UIBezierPath()
+        p.move(to: CGPoint(x: 3, y: 17))
+        p.addLine(to: CGPoint(x: 3.7, y: 15.19))
+        // curves and lines matching web SVG path coordinates exactly
+        p.addCurve(to: CGPoint(x: 5.69, y: 17),
+                   controlPoint1: CGPoint(x: 3.8, y: 16.22),
+                   controlPoint2: CGPoint(x: 4.66, y: 17))
+        p.addLine(to: CGPoint(x: 14.31, y: 17))
+        p.addCurve(to: CGPoint(x: 16.3, y: 15.19),
+                   controlPoint1: CGPoint(x: 15.34, y: 17),
+                   controlPoint2: CGPoint(x: 16.2, y: 16.22))
+        p.addLine(to: CGPoint(x: 17, y: 8))
+        p.addLine(to: CGPoint(x: 13, y: 6))
+        p.addCurve(to: CGPoint(x: 10, y: 3),
+                   controlPoint1: CGPoint(x: 13, y: 4.34),
+                   controlPoint2: CGPoint(x: 11.66, y: 3))
+        p.addCurve(to: CGPoint(x: 7, y: 6),
+                   controlPoint1: CGPoint(x: 8.34, y: 3),
+                   controlPoint2: CGPoint(x: 7, y: 4.34))
+        p.addLine(to: CGPoint(x: 3, y: 8))
+        p.addLine(to: CGPoint(x: 3, y: 17))
+        p.close()
+        return p.cgPath
+    }
+
+    // M7.5 11.5 L9.5 13.5 L13.5 9.5 — ті самі координати, що у веб
+    private func checkmarkPath() -&gt; CGPath {
+        let p = UIBezierPath()
+        p.move(to:    CGPoint(x: 7.5,  y: 11.5))
+        p.addLine(to: CGPoint(x: 9.5,  y: 13.5))
+        p.addLine(to: CGPoint(x: 13.5, y: 9.5))
+        return p.cgPath
+    }
+
+    private func startTrace() {
+        traceStartTime = CACurrentMediaTime()
+        traceLayer.opacity = 1
+        UIView.animate(withDuration: 0.1) { self.iconView.alpha = 0 }
+
+        let draw = CABasicAnimation(keyPath: "strokeEnd")
+        draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.8
+        draw.timingFunction = CAMediaTimingFunction(controlPoints: 0, 0, 0, 1)
+
+        let erase = CABasicAnimation(keyPath: "strokeStart")
+        erase.fromValue = 0; erase.toValue = 1; erase.beginTime = 0.8; erase.duration = 0.8
+        erase.timingFunction = CAMediaTimingFunction(controlPoints: 0.3, 0, 1, 1)
+
+        let group = CAAnimationGroup()
+        group.animations = [draw, erase]
+        group.duration = 1.6; group.repeatCount = .infinity; group.isRemovedOnCompletion = false
+        traceLayer.add(group, forKey: "cartTrace")
+    }
+
+    private func waitForCycleThenSucceed() {
+        let elapsed   = (CACurrentMediaTime() - traceStartTime).truncatingRemainder(dividingBy: 1.6)
+        let remaining = max(0.05, 1.6 - elapsed)
+        DispatchQueue.main.asyncAfter(deadline: .now() + remaining) { self.succeed() }
+    }
+
+    private func succeed() {
+        isLoading = false; inCart = true
+        traceLayer.removeAnimation(forKey: "cartTrace")
+        UIView.animate(withDuration: 0.1) { self.traceLayer.opacity = 0 }
+
+        // Кнопка: bg/border білий, текст темний
+        UIView.animate(withDuration: 0.2) {
+            self.backgroundColor  = .white
+        }
+        // Іконка: scale 1.25→1 (--motion-easing-spring)
+        iconView.alpha = 1
+        UIView.animate(withDuration: 0.3, delay: 0,
+                       usingSpringWithDamping: 0.55, initialSpringVelocity: 0, options: []) {
+            self.iconSlot.transform = CGAffineTransform(scaleX: 1.25, y: 1.25)
+        } completion: { _ in
+            UIView.animate(withDuration: 0.22) { self.iconSlot.transform = .identity }
+        }
+        // Галочка: CABasicAnimation strokeEnd 0→1, 200ms delay 60ms
+        checkLayer.opacity = 1
+        iconView.alpha     = 0    // SF Symbol ховається, показується CAShapeLayer
+        checkLayer.strokeColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1).cgColor
+        let drawCheck = CABasicAnimation(keyPath: "strokeEnd")
+        drawCheck.fromValue = 0; drawCheck.toValue = 1; drawCheck.duration = 0.2
+        drawCheck.beginTime = CACurrentMediaTime() + 0.06
+        drawCheck.timingFunction = CAMediaTimingFunction(controlPoints: 0, 0, 0, 1)
+        drawCheck.fillMode  = .forwards; drawCheck.isRemovedOnCompletion = false
+        checkLayer.add(drawCheck, forKey: "drawCheck")
+
+        successHaptic.notificationOccurred(.success)
+        setLabel("У кошику", color: UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1))
+    }
+
+    private func setLabel(_ text: String, color: UIColor) {
+        UIView.animate(withDuration: 0.1) { self.labelView.alpha = 0 } completion: { _ in
+            self.labelView.text      = text
+            self.labelView.textColor = color
+            self.labelView.sizeToFit()
+            UIView.animate(withDuration: 0.1) { self.labelView.alpha = 1 }
+        }
+    }
+
+    @objc private func handleTap() {
+        if inCart { reset(); return }
+        guard !isLoading else { return }
         isLoading = true
 
+        pressHaptic.impactOccurred()
+        UIView.animate(withDuration: 0.1) { self.transform = CGAffineTransform(scaleX: 0.97, y: 0.97) }
+        UIView.animate(withDuration: 0.1, delay: 0.1, options: []) {
+            self.transform = .identity
+        } completion: { _ in }
+
+        // Оптимістичний UI: без повільного інтернету — одразу succeed()
+        // if !slowNetworkEnabled { succeed(); return }
+
+        startTrace()
+        setLabel("Додаємо…", color: .white)
+
         Task {
-            try? await api.addToCart(productId)     // реальний виклик
-            await MainActor.run {
-                isLoading = false
-                successHaptic.notificationOccurred(.success)
-                // Анімує зміну фону й тексту разом зі spring-bounce
-                withAnimation(.easeInOut(duration: 0.2)) { inCart = true }
-                withAnimation(.spring(response: 0.25, dampingFraction: 0.65)) {
-                    scale = 1.04
-                }
-                withAnimation(.spring(response: 0.25, dampingFraction: 0.65).delay(0.15)) {
-                    scale = 1
-                }
-            }
+            try? await api.addToCart(productId)
+            await MainActor.run { [weak self] in self?.waitForCycleThenSucceed() }
         }
+    }
+
+    private func reset() {
+        inCart = false
+        checkLayer.removeAnimation(forKey: "drawCheck")
+        checkLayer.opacity = 0; checkLayer.strokeEnd = 0
+        iconView.alpha = 1
+        iconView.image = UIImage(systemName: "cart",
+            withConfiguration: UIImage.SymbolConfiguration(pointSize: 16))?.withRenderingMode(.alwaysTemplate)
+        iconView.tintColor = .white
+        UIView.animate(withDuration: 0.2) {
+            self.backgroundColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+        }
+        setLabel("До кошика", color: .white)
     }
 }</pre>
 
@@ -2993,21 +3492,54 @@ fun AddToCartButton(productId: String) {
     if (!wrap || !btn) return;
     const label = btn.querySelector('.cart-label');
     const check = btn.querySelector('.ci-check');
+    const cartSvg = document.getElementById('cartSvg');
+    const traceSvg = document.getElementById('cartTrace');
     const slowToggle = document.getElementById('slowNetToggleCart');
     const status = document.getElementById('cartStatus');
     let inCart = false;
     let pending = false;
 
-    // Ініціалізуємо stroke-dash для галочки: прихована поки не in-cart
-    // Керуємо stroke-dashoffset через inline JS (не CSS cascade) — надійніше для transitions
+    // ── Ініціалізація stroke-dash для галочки ──────────────────────────────
     const checkLen = check.getTotalLength();
     check.style.strokeDasharray = checkLen;
-    check.style.strokeDashoffset = checkLen + 2; // +2px буфер: уникаємо sub-pixel артефакту на межі dash/gap
+    check.style.strokeDashoffset = checkLen + 2; // +2px буфер проти sub-pixel артефакту
 
-    // Фіксуємо ширину кнопки в дефолтному стані, щоб зміна тексту не змінювала layout
+    // ── Будуємо trace-path по силуету кошика ──────────────────────────────
+    // Силует: handle (арка) + body (трапеція) як один замкнений контур
+    const silhouetteD = 'M3 8 L3.7 15.19 C3.8 16.22 4.66 17 5.69 17 H14.31 C15.34 17 16.2 16.22 16.3 15.19 L17 8 L13 6 C13 4.34 11.66 3 10 3 C8.34 3 7 4.34 7 6 Z';
+    const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    probe.setAttribute('d', silhouetteD);
+    document.body.appendChild(probe); // потрібно в DOM для getTotalLength/getPointAtLength
+    const totalLen = probe.getTotalLength();
+    const samples = 140;
+    const pts = [];
+    for (let i = 0; i < samples; i++) pts.push(probe.getPointAtLength((i / samples) * totalLen));
+    document.body.removeChild(probe);
+
+    // Починаємо з найнижчої точки (clockwise) — як heart-trace
+    let bottomIdx = 0;
+    for (let i = 1; i < pts.length; i++) if (pts[i].y > pts[bottomIdx].y) bottomIdx = i;
+    const ordered = [...pts.slice(bottomIdx), ...pts.slice(0, bottomIdx)];
+    const traceD = 'M' + ordered.map(p => p.x.toFixed(2) + ' ' + p.y.toFixed(2)).join(' L') + ' Z';
+
+    const tracePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    tracePath.setAttribute('d', traceD);
+    tracePath.setAttribute('fill', 'none');
+    tracePath.setAttribute('stroke', 'currentColor');
+    tracePath.setAttribute('stroke-width', '1.5');
+    tracePath.setAttribute('stroke-linecap', 'round');
+    tracePath.setAttribute('stroke-linejoin', 'round');
+    traceSvg.appendChild(tracePath);
+
+    const traceLen = tracePath.getTotalLength();
+    tracePath.style.strokeDasharray = traceLen;
+    tracePath.style.strokeDashoffset = traceLen; // прихований за замовчуванням
+    traceSvg.style.setProperty('--len', traceLen + 'px');
+    traceSvg.style.setProperty('--neg-len', (-traceLen) + 'px');
+
+    // Фіксуємо ширину кнопки щоб зміна тексту не змінювала layout
     document.fonts.ready.then(() => { btn.style.minWidth = btn.offsetWidth + 'px'; });
 
-    /* Плавна заміна тексту: зникає → міняється → з'являється */
     function setLabel(text) {
       label.style.opacity = '0';
       setTimeout(() => { label.textContent = text; label.style.opacity = '1'; }, 100);
@@ -3019,7 +3551,7 @@ fun AddToCartButton(productId: String) {
     }
 
     function burst() {
-      // Центруємо на іконці, а не на всій кнопці
+      // Центруємо частинки на іконці (не на всій кнопці) — як heart burst
       const slotRect = btn.querySelector('.cart-icon-slot').getBoundingClientRect();
       const wrapRect = wrap.getBoundingClientRect();
       const cx = slotRect.left - wrapRect.left + slotRect.width / 2;
@@ -3033,7 +3565,7 @@ fun AddToCartButton(productId: String) {
         dot.style.top  = cy + 'px';
         dot.style.transform = 'translate(-50%,-50%)';
         wrap.appendChild(dot);
-        void dot.offsetWidth;
+        void dot.offsetWidth; // forced reflow — без нього transition не спрацює з першого кліку
         dot.style.transform = 'translate(calc(-50% + ' + Math.cos(angle) * dist + 'px), calc(-50% + ' + Math.sin(angle) * dist + 'px))';
         dot.style.opacity = '0';
         setTimeout(() => dot.remove(), 550);
@@ -3043,16 +3575,21 @@ fun AddToCartButton(productId: String) {
     function succeed() {
       pending = false;
       inCart = true;
-      wrap.classList.remove('loading');  // CSS: spinner ховається, cart-svg з'являється
-      check.style.opacity = '1';        // зняти CSS opacity:0 перед анімацією
+      wrap.classList.remove('loading'); // trace ховається, cart-svg з'являється
+
+      // Масштабуємо іконку як heart при "додати в обране" (scale 1.25 → 1)
+      cartSvg.style.transform = 'scale(1.25)';
+      setTimeout(() => (cartSvg.style.transform = 'scale(1)'), 220);
+
+      // Промальовуємо галочку
+      check.style.opacity = '1';
       check.style.transition = 'stroke-dashoffset 200ms cubic-bezier(0,0,0,1) 60ms';
-      void check.offsetWidth; // зафіксувати transition у поточному стилі
-      check.style.strokeDashoffset = '0'; // промалювати галочку
-      btn.classList.add('in-cart');  // CSS: bg→#fff, color→#212121, лінії зникають
+      void check.offsetWidth;
+      check.style.strokeDashoffset = '0';
+
+      btn.classList.add('in-cart'); // bg→#fff, color→#212121, лінії зникають
       btn.setAttribute('aria-pressed', 'true');
       setLabel('У кошику');
-      btn.style.transform = 'scale(1.04)';
-      setTimeout(() => (btn.style.transform = 'scale(1)'), 150);
       burst();
       status.textContent = 'Додано до кошика';
       setTimeout(() => { if (status.textContent === 'Додано до кошика') status.textContent = ''; }, 1500);
@@ -3060,12 +3597,11 @@ fun AddToCartButton(productId: String) {
 
     function reset() {
       inCart = false;
-      // Стерти галочку швидко
       check.style.transition = 'stroke-dashoffset 150ms cubic-bezier(0.3,0,1,1) 0ms';
       void check.offsetWidth;
-      check.style.strokeDashoffset = checkLen + 2; // стерти
-      setTimeout(() => { check.style.opacity = ''; }, 160); // повернути CSS opacity:0 після анімації
-      btn.classList.remove('in-cart');  // CSS: bg→#212121, color→#fff, лінії з'являються
+      check.style.strokeDashoffset = checkLen + 2;
+      setTimeout(() => { check.style.opacity = ''; }, 160);
+      btn.classList.remove('in-cart');
       btn.setAttribute('aria-pressed', 'false');
       setLabel('До кошика');
       status.textContent = '';
@@ -3074,7 +3610,6 @@ fun AddToCartButton(productId: String) {
     btn.addEventListener('click', () => {
       if (pending) return;
 
-      // "У кошику" → повернення до дефолтного стану
       if (inCart) {
         btn.style.transform = 'scale(0.97)';
         setTimeout(() => (btn.style.transform = 'scale(1)'), 100);
@@ -3083,18 +3618,20 @@ fun AddToCartButton(productId: String) {
       }
 
       pending = true;
-      btn.style.transform = 'scale(0.97)';  // press-фідбек, <100ms
+      btn.style.transform = 'scale(0.97)'; // press-фідбек <100ms
       setTimeout(() => (btn.style.transform = 'scale(1)'), 100);
 
       if (!slowToggle.checked) {
-        succeed();  // оптимістичний UI: без стану завантаження
+        succeed(); // оптимістичний UI: пропускаємо стан завантаження
         return;
       }
 
-      wrap.classList.add('loading');  // CSS: spinner з'являється, cart-svg ховається
+      // Стан завантаження: trace-анімація по силуету кошика
+      wrap.classList.add('loading');
       setLabel('Додаємо…');
       status.textContent = 'Додаємо до кошика…';
-      fakeRequest().then(succeed);
+      // Чекаємо завершення поточного циклу trace — щоб не переривати посеред малювання
+      fakeRequest().then(() => waitForCycle(tracePath)).then(succeed);
     });
   })();
 
