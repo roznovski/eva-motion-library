@@ -461,6 +461,35 @@
   .ccnt-wrap .ccnt-badge { transform-box: fill-box; transform-origin: center; transform: scale(0); }
   .ccnt-wrap.has-badge .ccnt-badge { transform: scale(1); }
 
+  /* ---------- Round nav button (gallery arrows) ---------- */
+  .rb-row { display: flex; gap: 12px; align-items: center; }
+  .rb-btn {
+    width: 40px; height: 40px; border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff; border: 1.5px solid #D8D8D8;
+    cursor: pointer; padding: 0;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .rb-icon path { stroke: #212121; }
+
+  /* Зараз: без .is-good — жодних hover/press/focus правил нижче не діють,
+     кнопка статична, як неоформлений контрол без motion-дизайну */
+  .rb-btn.is-good {
+    transition:
+      background-color var(--motion-duration-fast) var(--motion-easing-standard),
+      border-color     var(--motion-duration-fast) var(--motion-easing-standard),
+      border-width     var(--motion-duration-fast) var(--motion-easing-standard),
+      transform        var(--motion-duration-quick) var(--motion-easing-spring);
+  }
+  .rb-btn.is-good .rb-icon path { transition: stroke var(--motion-duration-fast) var(--motion-easing-standard); }
+
+  .rb-btn.is-good:hover:not(:active) { background: #EBEBEB; }
+  .rb-btn.is-good:focus-visible { border-width: 2px; outline: none; }
+  /* Press: чорний фон + біла іконка + легке стиснення — миттєво, нативним :active,
+     без затримок і без JS-стану */
+  .rb-btn.is-good:active { background: #000; border-color: #000; transform: scale(0.92); }
+  .rb-btn.is-good:active .rb-icon path { stroke: #fff; }
+
   @media (max-width: 640px) {
     .wrap { padding: 0 16px 56px; }
     .intro { padding: 40px 0 28px; }
@@ -3221,6 +3250,226 @@ fun CartBadgeIcon() {
       </details>
     </section>
 
+    <!-- ============ Interaction: Round nav buttons (gallery arrows) ============ -->
+    <section class="interaction">
+      <div class="interaction-head">
+        <h2>Навігація галереї (gallery arrows)</h2>
+        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=7570-7765&t=hRdb1Xds5ThByY8a-1" target="_blank" rel="noopener">View in Figma →</a>
+      </div>
+
+      <div class="compare">
+        <!-- ─── Зараз ─── -->
+        <div class="compare-col is-bad">
+          <span class="compare-tag bad">Зараз</span>
+          <div class="compare-demo">
+            <div class="rb-row">
+              <button class="rb-btn" id="rbPrevBad" aria-label="Попереднє фото" style="transition:none;">
+                <svg class="rb-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="rb-btn" id="rbNextBad" aria-label="Наступне фото" style="transition:none;">
+                <svg class="rb-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 15L12.5 10L7.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── Пропозиція ─── -->
+        <div class="compare-col is-good">
+          <span class="compare-tag good">Пропозиція</span>
+          <div class="compare-demo">
+            <div class="rb-row">
+              <button class="rb-btn is-good" id="rbPrevGood" aria-label="Попереднє фото">
+                <svg class="rb-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="rb-btn is-good" id="rbNextGood" aria-label="Наступне фото">
+                <svg class="rb-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 15L12.5 10L7.5 5" stroke="#212121" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="tokens">
+            <span class="token">--motion-duration-fast</span>
+            <span class="token">--motion-duration-quick</span>
+            <span class="token">--motion-easing-spring</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="code-toggle">
+        <summary>Показати код (Web / iOS / Android)</summary>
+        <div class="code-tabs">
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="web">Web</button>
+            <button class="tab-btn" data-tab="ios">iOS · UIKit</button>
+            <button class="tab-btn" data-tab="android">Android · Compose</button>
+          </div>
+
+          <pre class="tab-panel active" data-panel="web">&lt;button class="rb-btn" aria-label="Попереднє фото"&gt;
+  &lt;svg class="rb-icon" width="20" height="20" viewBox="0 0 20 20"&gt;
+    &lt;path d="M12.5 15L7.5 10L12.5 5" stroke="#212121" stroke-width="1.5"/&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;
+
+.rb-btn {
+  width: 40px; height: 40px; border-radius: 24px;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; border: 1.5px solid #D8D8D8;
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color     var(--motion-duration-fast) var(--motion-easing-standard),
+    border-width     var(--motion-duration-fast) var(--motion-easing-standard),
+    transform        var(--motion-duration-quick) var(--motion-easing-spring);
+}
+.rb-icon path { stroke: #212121; transition: stroke var(--motion-duration-fast) var(--motion-easing-standard); }
+
+/* Нативні псевдокласи — жодного JS-стану для hover/press/focus */
+.rb-btn:hover:not(:active) { background: #EBEBEB; }
+.rb-btn:focus-visible       { border-width: 2px; outline: none; }
+.rb-btn:active {
+  background: #000; border-color: #000; transform: scale(0.92);
+}
+.rb-btn:active .rb-icon path { stroke: #fff; }
+
+/* Єдиний JS-штрих: іконка "штовхається" в напрямку руху й пружинить назад —
+   підказує напрямок навігації, замість статичного кліку в нікуди */
+btn.addEventListener('click', () =&gt; {
+  icon.style.transition = 'transform 220ms cubic-bezier(.34,1.56,.64,1)';
+  icon.style.transform = 'translateX(' + (direction * 3) + 'px)'; // -3 = ліва кнопка, +3 = права
+  setTimeout(() =&gt; (icon.style.transform = 'translateX(0)'), 90);
+});</pre>
+
+          <pre class="tab-panel" data-panel="ios">final class RoundNavButton: UIControl {
+    let direction: CGFloat   // -1 = попереднє, +1 = наступне
+    private let pressHaptic = UIImpactFeedbackGenerator(style: .light)
+    private let iconView = UIImageView()
+    private var hoverGR: UIHoverGestureRecognizer!
+
+    init(direction: CGFloat) {
+        self.direction = direction
+        super.init(frame: CGRect(x: 0, y: 0, width: 40, height: 40))
+        setup()
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    private func setup() {
+        backgroundColor    = .white
+        layer.cornerRadius = 20
+        layer.borderWidth  = 1.5
+        layer.borderColor  = UIColor(red: 0.847, green: 0.847, blue: 0.847, alpha: 1).cgColor // #D8D8D8
+
+        let name = direction &lt; 0 ? "chevron.left" : "chevron.right"
+        iconView.image = UIImage(systemName: name,
+            withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .medium))?
+            .withRenderingMode(.alwaysTemplate)
+        iconView.tintColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+        iconView.frame = bounds
+        iconView.contentMode = .center
+        addSubview(iconView)
+
+        // Hover (trackpad/pointer) — прямий аналог CSS :hover
+        hoverGR = UIHoverGestureRecognizer(target: self, action: #selector(handleHover))
+        addGestureRecognizer(hoverGR)
+
+        addTarget(self, action: #selector(touchDown),  for: .touchDown)
+        addTarget(self, action: #selector(touchUp),    for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        addTarget(self, action: #selector(handleTap),  for: .touchUpInside)
+    }
+
+    @objc private func handleHover(_ gr: UIHoverGestureRecognizer) {
+        guard gr.state == .began || gr.state == .changed else {
+            backgroundColor = .white; return
+        }
+        backgroundColor = UIColor(red: 0.922, green: 0.922, blue: 0.922, alpha: 1) // #EBEBEB
+    }
+
+    // Press: миттєво, без анімації — те саме відчуття, що й CSS :active
+    @objc private func touchDown() {
+        pressHaptic.impactOccurred()
+        backgroundColor   = .black
+        layer.borderColor = UIColor.black.cgColor
+        iconView.tintColor = .white
+        transform = CGAffineTransform(scaleX: 0.92, y: 0.92)
+    }
+
+    @objc private func touchUp() {
+        UIView.animate(withDuration: 0.1) {
+            self.backgroundColor    = .white
+            self.layer.borderColor  = UIColor(red: 0.847, green: 0.847, blue: 0.847, alpha: 1).cgColor
+            self.iconView.tintColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+            self.transform = .identity
+        }
+    }
+
+    // Напрямковий "поштовх" іконки — spring, той самий damping, що й у бейджа дзвіночка
+    @objc private func handleTap() {
+        UIView.animate(withDuration: 0.22, delay: 0,
+                       usingSpringWithDamping: 0.55, initialSpringVelocity: 0, options: []) {
+            self.iconView.transform = CGAffineTransform(translationX: self.direction * 3, y: 0)
+        } completion: { _ in
+            UIView.animate(withDuration: 0.22, delay: 0,
+                           usingSpringWithDamping: 0.55, initialSpringVelocity: 0, options: []) {
+                self.iconView.transform = .identity
+            }
+        }
+    }
+}</pre>
+
+          <pre class="tab-panel" data-panel="android">@Composable
+fun RoundNavButton(direction: Int, onClick: () -&gt; Unit) { // direction: -1 попереднє, +1 наступне
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val iconOffset = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+
+    val bgColor by animateColorAsState(
+        targetValue = if (isPressed) Color.Black
+                      else if (isHovered) Color(0xFFEBEBEB)
+                      else Color.White,
+        animationSpec = tween(100), label = "rbBg"
+    )
+    val iconColor by animateColorAsState(
+        targetValue = if (isPressed) Color.White else Color(0xFF212121),
+        animationSpec = tween(100), label = "rbIcon"
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.92f else 1f,
+        animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium),
+        label = "rbScale"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .scale(scale)
+            .clip(CircleShape)
+            .background(bgColor)
+            .border(1.5.dp, if (isPressed) Color.Black else Color(0xFFD8D8D8), CircleShape)
+            .hoverable(interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                scope.launch {
+                    // Напрямковий "поштовх" іконки — та сама spring-фізика, що й у бейджа дзвіночка
+                    iconOffset.animateTo(direction * 3f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium))
+                    iconOffset.animateTo(0f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium))
+                }
+                onClick()
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = if (direction &lt; 0) Icons.Outlined.ChevronLeft else Icons.Outlined.ChevronRight,
+            contentDescription = if (direction &lt; 0) "Попереднє фото" else "Наступне фото",
+            tint = iconColor,
+            modifier = Modifier.offset(x = iconOffset.value.dp)
+        )
+    }
+}</pre>
+        </div>
+      </details>
+    </section>
+
     <div class="placeholder-card">Наступна взаємодія — та сама структура: Зараз / Пропозиція / Web / iOS / Android</div>
 
   </div>
@@ -4270,6 +4519,25 @@ fun CartBadgeIcon() {
       status.textContent = 'У кошику: ' + count;
       setTimeout(() => { if (status.textContent === 'У кошику: ' + count) status.textContent = ''; }, 1500);
     });
+  })();
+
+  /* ---- "Пропозиція": hover/press/focus — суто нативні псевдокласи в CSS,
+     жодного JS-стану для них. Єдина роль JS тут — короткий напрямковий
+     "поштовх" іконки на клік, що підказує бік навігації (ліво/право) і
+     пружинить назад — без затримок, обидва кроки миттєві. ---- */
+  (function wireRoundNavButtons() {
+    function wireNudge(id, direction) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const icon = btn.querySelector('.rb-icon');
+      btn.addEventListener('click', () => {
+        icon.style.transition = 'transform 220ms cubic-bezier(.34,1.56,.64,1)';
+        icon.style.transform = 'translateX(' + (direction * 3) + 'px)';
+        setTimeout(() => { icon.style.transform = 'translateX(0)'; }, 90);
+      });
+    }
+    wireNudge('rbPrevGood', -1);
+    wireNudge('rbNextGood', 1);
   })();
 
   /* ---- "Повільний інтернет" toggles: same fill-in animation as the
