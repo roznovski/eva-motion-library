@@ -157,7 +157,9 @@
   .checkbox-wrap.loading path.outline { opacity: 0; }
 
   .checkbox-wrap .trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity var(--motion-duration-base) var(--motion-easing-standard); }
-  .checkbox-wrap.loading .trace-path { opacity: 1; animation: checkbox-trace 0.8s infinite; }
+  /* Той самий темп циклу, що й у серця (1.6с) — спільний клас .checkbox-wrap
+     використовує і checkbox, і radio, тож зміна одразу поширюється на обидва */
+  .checkbox-wrap.loading .trace-path { opacity: 1; animation: checkbox-trace 1.6s infinite; }
   @keyframes checkbox-trace {
     0% { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
     50% { stroke-dashoffset: 0; animation-timing-function: var(--motion-easing-accelerate); }
@@ -896,7 +898,7 @@ fun WishlistHeart(productId: String) {
 .trace-path { opacity: 0; fill: none; stroke: #BFBFBF; stroke-width: 1.5; }
 .checkbox-wrap.loading .trace-path {
   opacity: 1;
-  animation: checkbox-trace 0.8s infinite;   /* швидше за серце (1.6с) — checkbox має відчуватись легшим */
+  animation: checkbox-trace 1.6s infinite;   /* той самий темп, що й у серця */
 }
 @keyframes checkbox-trace {
   0%   { stroke-dashoffset: var(--len); animation-timing-function: var(--motion-easing-decelerate); }
@@ -962,7 +964,7 @@ class CheckboxControl: UIControl {
 
     private let imageView  = UIImageView()
     // Трейс по квадратному контуру чекбокса — CAShapeLayer з roundedRect path.
-    // strokeEnd/strokeStart цикл 1.2s (менший елемент — коротший цикл).
+    // strokeEnd/strokeStart цикл 1.6s — той самий темп, що й у серця.
     private let traceLayer = CAShapeLayer()
 
     override init(frame: CGRect) { super.init(frame: frame); setup() }
@@ -1000,22 +1002,22 @@ class CheckboxControl: UIControl {
         traceLayer.opacity = 1; imageView.alpha = 0
 
         let draw = CABasicAnimation(keyPath: "strokeEnd")
-        draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.6
+        draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.8
         draw.timingFunction = CAMediaTimingFunction(controlPoints: 0, 0, 0, 1)
 
         let erase = CABasicAnimation(keyPath: "strokeStart")
-        erase.fromValue = 0; erase.toValue = 1; erase.beginTime = 0.6; erase.duration = 0.6
+        erase.fromValue = 0; erase.toValue = 1; erase.beginTime = 0.8; erase.duration = 0.8
         erase.timingFunction = CAMediaTimingFunction(controlPoints: 0.3, 0, 1, 1)
 
         let group = CAAnimationGroup()
         group.animations = [draw, erase]
-        group.duration = 1.2; group.repeatCount = .infinity; group.isRemovedOnCompletion = false
+        group.duration = 1.6; group.repeatCount = .infinity; group.isRemovedOnCompletion = false
         traceLayer.add(group, forKey: "checkboxTrace")
     }
 
     private func waitForCycleThenSucceed() {
-        let elapsed   = (CACurrentMediaTime() - traceStartTime).truncatingRemainder(dividingBy: 1.2)
-        let remaining = max(0.05, 1.2 - elapsed)
+        let elapsed   = (CACurrentMediaTime() - traceStartTime).truncatingRemainder(dividingBy: 1.6)
+        let remaining = max(0.05, 1.6 - elapsed)
         DispatchQueue.main.asyncAfter(deadline: .now() + remaining) { self.succeed() }
     }
 
@@ -1281,22 +1283,22 @@ class RadioControl: UIControl {
         traceLayer.opacity = 1; imageView.alpha = 0
 
         let draw = CABasicAnimation(keyPath: "strokeEnd")
-        draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.6
+        draw.fromValue = 0; draw.toValue = 1; draw.duration = 0.8
         draw.timingFunction = CAMediaTimingFunction(controlPoints: 0, 0, 0, 1)
 
         let erase = CABasicAnimation(keyPath: "strokeStart")
-        erase.fromValue = 0; erase.toValue = 1; erase.beginTime = 0.6; erase.duration = 0.6
+        erase.fromValue = 0; erase.toValue = 1; erase.beginTime = 0.8; erase.duration = 0.8
         erase.timingFunction = CAMediaTimingFunction(controlPoints: 0.3, 0, 1, 1)
 
         let group = CAAnimationGroup()
         group.animations = [draw, erase]
-        group.duration = 1.2; group.repeatCount = .infinity; group.isRemovedOnCompletion = false
+        group.duration = 1.6; group.repeatCount = .infinity; group.isRemovedOnCompletion = false
         traceLayer.add(group, forKey: "radioTrace")
     }
 
     private func waitForCycleThenSucceed() {
-        let elapsed   = (CACurrentMediaTime() - traceStartTime).truncatingRemainder(dividingBy: 1.2)
-        let remaining = max(0.05, 1.2 - elapsed)
+        let elapsed   = (CACurrentMediaTime() - traceStartTime).truncatingRemainder(dividingBy: 1.6)
+        let remaining = max(0.05, 1.6 - elapsed)
         DispatchQueue.main.asyncAfter(deadline: .now() + remaining) { self.succeed() }
     }
 
