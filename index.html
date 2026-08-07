@@ -322,6 +322,36 @@
   .slider.dragging .slider-thumb,
   .slider.dragging .slider-fill { transition: none; }
 
+  /* ---------- Range chart (гістограма розподілу над слайдером) ---------- */
+  .range-slider-group { display: flex; flex-direction: column; width: 288px; max-width: 100%; }
+  .range-chart { width: 100%; height: 56px; margin-bottom: -8px; overflow: visible; }
+  .range-chart svg { display: block; width: 100%; height: 100%; }
+  .range-chart-base { fill: #F3F3F3; }
+  .range-chart-active { fill: #D9F2BF; }
+
+  /* Зараз: клип синхронізується з повзунками миттєво, без transition і без
+     появи "зростанням" — той самий принцип, що й .slider.is-linear поруч */
+  .range-chart.is-bad .range-chart-clip { transition: none; }
+
+  /* Пропозиція: клип "тягнеться" за повзунками тими самими токенами, що й
+     slider-fill (quick + spring); під час активного драгу transition вимикає
+     сам JS (як і в самого слайдера), щоб рух лишався живим 1:1 з курсором.
+     При першій появі секції силует "виростає" знизу вгору — decelerate,
+     screen-тривалість, один раз, без циклу. */
+  .range-chart.is-good .range-chart-clip {
+    transition:
+      x     var(--motion-duration-quick) var(--motion-easing-spring),
+      width var(--motion-duration-quick) var(--motion-easing-spring);
+  }
+  .range-chart.is-good .range-chart-shape {
+    transform-box: fill-box; transform-origin: bottom;
+    animation: range-chart-grow var(--motion-duration-screen) var(--motion-easing-decelerate) both;
+  }
+  @keyframes range-chart-grow {
+    from { transform: scaleY(0); }
+    to   { transform: scaleY(1); }
+  }
+
   /* ---------- Cart button component ---------- */
   .cart-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
 
@@ -1693,19 +1723,30 @@ fun SettingToggle() {
     <!-- ============ Interaction: Range slider ============ -->
     <section class="interaction">
       <div class="interaction-head">
-        <h2>Слайдер (range)</h2>
-        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=7273-16081&t=jqaWVWEAcUC4T2p0-1" target="_blank" rel="noopener">View in Figma →</a>
+        <h2>Слайдер з графіком (range + chart)</h2>
+        <a class="figma-link" href="https://www.figma.com/design/q5jwASDszq6oGJBx5ogoKR/EVA-Library-WEB?node-id=8516-34640&t=hRdb1Xds5ThByY8a-1" target="_blank" rel="noopener">View in Figma →</a>
       </div>
 
       <div class="compare">
         <div class="compare-col is-bad">
           <span class="compare-tag bad">Зараз</span>
           <div class="compare-demo">
-            <div class="slider is-linear" id="sliderBefore">
-              <div class="slider-track"></div>
-              <div class="slider-fill" id="sliderBeforeFill"></div>
-              <div class="slider-thumb" id="sliderBeforeMin" tabindex="0"></div>
-              <div class="slider-thumb" id="sliderBeforeMax" tabindex="0"></div>
+            <div class="range-slider-group">
+              <div class="range-chart is-bad">
+                <svg viewBox="0 0 268 56" preserveAspectRatio="none">
+                  <g class="range-chart-shape">
+                    <path class="range-chart-base" d="M22 46.906L0 56H268L242 52.6496L201 43.5556L183.5 28.7179L169.5 37.3333L133 30.1538L107.5 43.5556L73 33.0256L50 0L22 46.906Z"/>
+                    <clipPath id="chartClipBefore"><rect class="range-chart-clip" id="chartClipRectBefore" x="0" y="0" width="134" height="56"/></clipPath>
+                    <path class="range-chart-active" d="M22 46.906L0 56H268L242 52.6496L201 43.5556L183.5 28.7179L169.5 37.3333L133 30.1538L107.5 43.5556L73 33.0256L50 0L22 46.906Z" clip-path="url(#chartClipBefore)"/>
+                  </g>
+                </svg>
+              </div>
+              <div class="slider is-linear" id="sliderBefore">
+                <div class="slider-track"></div>
+                <div class="slider-fill" id="sliderBeforeFill"></div>
+                <div class="slider-thumb" id="sliderBeforeMin" tabindex="0"></div>
+                <div class="slider-thumb" id="sliderBeforeMax" tabindex="0"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -1713,11 +1754,22 @@ fun SettingToggle() {
         <div class="compare-col is-good">
           <span class="compare-tag good">Пропозиція</span>
           <div class="compare-demo">
-            <div class="slider" id="sliderProposal">
-              <div class="slider-track"></div>
-              <div class="slider-fill" id="sliderFill"></div>
-              <div class="slider-thumb" id="sliderMin" tabindex="0"></div>
-              <div class="slider-thumb" id="sliderMax" tabindex="0"></div>
+            <div class="range-slider-group">
+              <div class="range-chart is-good">
+                <svg viewBox="0 0 268 56" preserveAspectRatio="none">
+                  <g class="range-chart-shape">
+                    <path class="range-chart-base" d="M22 46.906L0 56H268L242 52.6496L201 43.5556L183.5 28.7179L169.5 37.3333L133 30.1538L107.5 43.5556L73 33.0256L50 0L22 46.906Z"/>
+                    <clipPath id="chartClipGood"><rect class="range-chart-clip" id="chartClipRectGood" x="0" y="0" width="134" height="56"/></clipPath>
+                    <path class="range-chart-active" d="M22 46.906L0 56H268L242 52.6496L201 43.5556L183.5 28.7179L169.5 37.3333L133 30.1538L107.5 43.5556L73 33.0256L50 0L22 46.906Z" clip-path="url(#chartClipGood)"/>
+                  </g>
+                </svg>
+              </div>
+              <div class="slider" id="sliderProposal">
+                <div class="slider-track"></div>
+                <div class="slider-fill" id="sliderFill"></div>
+                <div class="slider-thumb" id="sliderMin" tabindex="0"></div>
+                <div class="slider-thumb" id="sliderMax" tabindex="0"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -1732,7 +1784,16 @@ fun SettingToggle() {
           <button class="tab-btn" data-tab="android">Android · Compose</button>
         </div>
 
-        <pre class="tab-panel active" data-panel="web">&lt;div class="slider" id="slider"&gt;
+        <pre class="tab-panel active" data-panel="web">&lt;div class="range-chart"&gt;
+  &lt;svg viewBox="0 0 268 56" preserveAspectRatio="none"&gt;
+    &lt;g class="range-chart-shape"&gt;
+      &lt;path class="range-chart-base" d="M22 46.906L0 56H268...Z"/&gt;
+      &lt;clipPath id="chartClip"&gt;&lt;rect class="range-chart-clip" id="chartClipRect" x="0" y="0" width="134" height="56"/&gt;&lt;/clipPath&gt;
+      &lt;path class="range-chart-active" d="M22 46.906L0 56H268...Z" clip-path="url(#chartClip)"/&gt;
+    &lt;/g&gt;
+  &lt;/svg&gt;
+&lt;/div&gt;
+&lt;div class="slider" id="slider"&gt;
   &lt;div class="slider-track"&gt;&lt;/div&gt;
   &lt;div class="slider-fill" id="fill"&gt;&lt;/div&gt;
   &lt;div class="slider-thumb" id="thumbMin" tabindex="0"&gt;&lt;/div&gt;
@@ -1742,6 +1803,18 @@ fun SettingToggle() {
 .slider-fill, .slider-thumb {
   transition: left var(--motion-duration-quick) var(--motion-easing-spring);
 }
+/* Клип графіка "тягнеться" тими самими токенами, що й slider-fill —
+   один спільний motion-язик для обох елементів */
+.range-chart-clip {
+  transition: x var(--motion-duration-quick) var(--motion-easing-spring),
+              width var(--motion-duration-quick) var(--motion-easing-spring);
+}
+/* Разова поява силуету при завантаженні — знизу вгору, без циклу */
+.range-chart-shape {
+  transform-box: fill-box; transform-origin: bottom;
+  animation: range-chart-grow var(--motion-duration-screen) var(--motion-easing-decelerate) both;
+}
+@keyframes range-chart-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 .slider-thumb:hover { transform: scale(1.08); box-shadow: 0 1px 4px rgba(0,0,0,.18); }
 .slider-thumb.grabbing {
   transform: scale(1.2);
@@ -1758,6 +1831,7 @@ function makeDraggable(thumb, getMin, getMax, setValue, isMinThumb) {
     thumb.setPointerCapture(e.pointerId);
     thumb.classList.add('grabbing');
     slider.classList.add('dragging');            // вимикає transition на час drag
+    chartClipRect.style.transition = 'none';      // клип графіка теж без лагу під час драгу
 
     function move(ev) {
       const rect = track.getBoundingClientRect();
@@ -1766,10 +1840,13 @@ function makeDraggable(thumb, getMin, getMax, setValue, isMinThumb) {
       if (isMinThumb) px = Math.min(px, getMax() - 16);
       else px = Math.max(px, getMin() + 16);
       setValue(px);                               // 1:1 з курсором, без анімації
+      chartClipRect.setAttribute('x', (getMin() / rect.width) * 268);
+      chartClipRect.setAttribute('width', ((getMax() - getMin()) / rect.width) * 268);
     }
     function up() {
       thumb.classList.remove('grabbing');
       slider.classList.remove('dragging');        // повертає spring-transition для наступних стрибків
+      chartClipRect.style.transition = '';
       thumb.removeEventListener('pointermove', move);
       thumb.removeEventListener('pointerup', up);
     }
@@ -1797,6 +1874,13 @@ track.addEventListener('click', (e) =&gt; {
     private let minThumb  = RangeThumb()
     private let maxThumb  = RangeThumb()
 
+    // Графік: той самий силует двічі — сірий базовий шар і зелений, обрізаний
+    // маскою під поточний діапазон (аналог SVG clipPath/rect у веб-версії)
+    private let chartHeight: CGFloat = 56
+    private let chartBaseLayer   = CAShapeLayer()
+    private let chartActiveLayer = CAShapeLayer()
+    private let chartMaskLayer   = CAShapeLayer()
+
     private let trackH:    CGFloat = 8
     private let thumbSize: CGFloat = 22
     private let edgeInset: CGFloat = 12
@@ -1808,6 +1892,13 @@ track.addEventListener('click', (e) =&gt; {
     required init?(coder: NSCoder) { super.init(coder: coder); setup() }
 
     private func setup() {
+        chartBaseLayer.fillColor   = UIColor(red: 0.953, green: 0.953, blue: 0.953, alpha: 1).cgColor // #F3F3F3
+        chartActiveLayer.fillColor = UIColor(red: 0.851, green: 0.949, blue: 0.749, alpha: 1).cgColor // #D9F2BF
+        chartActiveLayer.mask = chartMaskLayer
+        chartMaskLayer.fillColor = UIColor.black.cgColor
+        layer.addSublayer(chartBaseLayer)
+        layer.addSublayer(chartActiveLayer)
+
         trackView.backgroundColor  = UIColor(red: 0.92, green: 0.92, blue: 0.92, alpha: 1)
         trackView.layer.cornerRadius = trackH / 2
         addSubview(trackView)
@@ -1825,10 +1916,33 @@ track.addEventListener('click', (e) =&gt; {
         trackView.addGestureRecognizer(tap)
     }
 
+    // Гірський силует — координати ті самі, що й у Figma/веб-версії,
+    // масштабовані під поточну ширину view
+    private func mountainPath(width: CGFloat) -&gt; CGPath {
+        let points: [(CGFloat, CGFloat)] = [
+            (22,46.906),(0,56),(268,56),(242,52.6496),(201,43.5556),(183.5,28.7179),
+            (169.5,37.3333),(133,30.1538),(107.5,43.5556),(73,33.0256),(50,0),(22,46.906)
+        ]
+        let scale = width / 268
+        let p = UIBezierPath()
+        p.move(to: CGPoint(x: points[0].0 * scale, y: points[0].1))
+        points.dropFirst().forEach { p.addLine(to: CGPoint(x: $0.0 * scale, y: $0.1)) }
+        p.close()
+        return p.cgPath
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
-        let midY = bounds.midY
-        trackView.frame = CGRect(x: 0, y: midY - trackH / 2, width: bounds.width, height: trackH)
+        // Графік займає верхню смугу (chartHeight), злегка перекриваючи трек — mb: -8 у Figma;
+        // трек одразу під ним, по центру решти висоти view
+        let chartFrame = CGRect(x: 0, y: 0, width: bounds.width, height: chartHeight - 8)
+        chartBaseLayer.frame   = chartFrame
+        chartActiveLayer.frame = chartFrame
+        chartBaseLayer.path    = mountainPath(width: bounds.width)
+        chartActiveLayer.path  = chartBaseLayer.path
+
+        let trackY = chartFrame.maxY + (bounds.height - chartFrame.maxY - trackH) / 2
+        trackView.frame = CGRect(x: 0, y: trackY, width: bounds.width, height: trackH)
         updatePositions(animated: false)
     }
 
@@ -1837,14 +1951,20 @@ track.addEventListener('click', (e) =&gt; {
         let apply = {
             self.fillView.frame = CGRect(x: minX, y: self.trackView.frame.minY,
                                          width: maxX - minX, height: self.trackH)
-            self.minThumb.center = CGPoint(x: minX, y: self.bounds.midY)
-            self.maxThumb.center = CGPoint(x: maxX, y: self.bounds.midY)
+            self.minThumb.center = CGPoint(x: minX, y: self.trackView.frame.midY)
+            self.maxThumb.center = CGPoint(x: maxX, y: self.trackView.frame.midY)
+            self.chartMaskLayer.frame = CGRect(x: minX, y: 0, width: maxX - minX, height: self.chartHeight)
         }
         if animated {
-            // spring-transition тільки для програмних стрибків (клік по треку)
+            // spring-transition тільки для програмних стрибків (клік по треку);
+            // maskLayer теж анімується — той самий CAAnimation, що йде за transform
             UIView.animate(withDuration: 0.25, delay: 0,
                            usingSpringWithDamping: 0.7, initialSpringVelocity: 0, options: []) { apply() }
-        } else { apply() }
+        } else {
+            CATransaction.begin(); CATransaction.setDisableActions(true) // без лагу під час живого драгу
+            apply()
+            CATransaction.commit()
+        }
     }
 
     @objc private func handleMinPan(_ g: UIPanGestureRecognizer) { handleDrag(g, isMin: true) }
@@ -1909,6 +2029,25 @@ fun RangeSlider() {
     var maxValue by remember { mutableStateOf(0.5f) }
     var isDragging by remember { mutableStateOf(false) }
     val trackWidthDp = 288.dp
+
+    // Клип рахується у fraction (0..1) — той самий принцип, що й x/width у SVG-версії
+    val chartPoints = listOf(
+        22f to 46.906f, 0f to 56f, 268f to 56f, 242f to 52.6496f, 201f to 43.5556f,
+        183.5f to 28.7179f, 169.5f to 37.3333f, 133f to 30.1538f, 107.5f to 43.5556f,
+        73f to 33.0256f, 50f to 0f, 22f to 46.906f
+    )
+    Canvas(modifier = Modifier.width(trackWidthDp).height(48.dp)) {
+        val scaleX = size.width / 268f
+        val path = Path().apply {
+            moveTo(chartPoints[0].first * scaleX, chartPoints[0].second)
+            chartPoints.drop(1).forEach { lineTo(it.first * scaleX, it.second) }
+            close()
+        }
+        drawPath(path, color = Color(0xFFF3F3F3)) // базовий силует — завжди сірий
+        clipRect(left = minValue * size.width, right = maxValue * size.width) {
+            drawPath(path, color = Color(0xFFD9F2BF)) // видима лише в межах поточного діапазону
+        }
+    }
 
     BoxWithConstraints(modifier = Modifier.size(trackWidthDp, 24.dp)) {
         val trackWidthPx = constraints.maxWidth.toFloat()
@@ -4101,6 +4240,8 @@ fun RoundNavButton(direction: Int, onClick: () -&gt; Unit) { // direction: -1 п
     const fill = document.getElementById(opts.fillId);
     const minThumb = document.getElementById(opts.minId);
     const maxThumb = document.getElementById(opts.maxId);
+    const chartClip = opts.chartClipId ? document.getElementById(opts.chartClipId) : null;
+    const CHART_VB = 268; // ширина viewBox графіка — клип рахується у тих самих одиницях
     const pad = 12; // половина товщини thumb — межі треку
 
     let minPx, maxPx;
@@ -4112,6 +4253,11 @@ fun RoundNavButton(direction: Int, onClick: () -&gt; Unit) { // direction: -1 п
       maxThumb.style.left = maxPx + 'px';
       fill.style.left = minPx + 'px';
       fill.style.width = (maxPx - minPx) + 'px';
+      if (chartClip) {
+        const w = width();
+        chartClip.setAttribute('x', ((minPx / w) * CHART_VB).toFixed(2));
+        chartClip.setAttribute('width', (((maxPx - minPx) / w) * CHART_VB).toFixed(2));
+      }
     }
 
     function setMin(px) {
@@ -4149,6 +4295,9 @@ fun RoundNavButton(direction: Int, onClick: () -&gt; Unit) { // direction: -1 п
         if (opts.interactive) {
           thumb.classList.add('grabbing');
           slider.classList.add('dragging');
+          // Живий драг: клип рухається 1:1 з курсором без transition-лагу,
+          // так само як slider-fill/thumb під час .dragging
+          if (chartClip) chartClip.style.transition = 'none';
         }
 
         function move(ev) {
@@ -4160,6 +4309,7 @@ fun RoundNavButton(direction: Int, onClick: () -&gt; Unit) { // direction: -1 п
           if (opts.interactive) {
             thumb.classList.remove('grabbing');
             slider.classList.remove('dragging');
+            if (chartClip) chartClip.style.transition = '';
             burst(isMinThumb ? minPx : maxPx, 12);   // відпустив — той самий ефект, що й "додати в обране"
           }
           thumb.removeEventListener('pointermove', move);
@@ -4184,8 +4334,8 @@ fun RoundNavButton(direction: Int, onClick: () -&gt; Unit) { // direction: -1 п
     }
   }
 
-  wireSlider({ sliderId: 'sliderBefore', fillId: 'sliderBeforeFill', minId: 'sliderBeforeMin', maxId: 'sliderBeforeMax', interactive: false });
-  wireSlider({ sliderId: 'sliderProposal', fillId: 'sliderFill', minId: 'sliderMin', maxId: 'sliderMax', interactive: true });
+  wireSlider({ sliderId: 'sliderBefore', fillId: 'sliderBeforeFill', minId: 'sliderBeforeMin', maxId: 'sliderBeforeMax', interactive: false, chartClipId: 'chartClipRectBefore' });
+  wireSlider({ sliderId: 'sliderProposal', fillId: 'sliderFill', minId: 'sliderMin', maxId: 'sliderMax', interactive: true, chartClipId: 'chartClipRectGood' });
 
   /* ── Dropdown ─────────────────────────────────────────────────────── */
   function wireDropdown(wrapperId, triggerId, labelId, statusId) {
