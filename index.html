@@ -329,14 +329,12 @@
   .range-chart-base { fill: #F3F3F3; }
   .range-chart-active { fill: #D9F2BF; }
 
-  /* Зараз: клип синхронізується з повзунками миттєво, без transition і без
-     появи "зростанням" — той самий принцип, що й .slider.is-linear поруч */
-  .range-chart.is-bad .range-chart-clip { transition: none; }
-
-  /* Пропозиція: клип "тягнеться" за повзунками тими самими токенами, що й
-     slider-fill (quick + spring); під час активного драгу transition вимикає
-     сам JS (як і в самого слайдера), щоб рух лишався живим 1:1 з курсором.
-     При першій появі секції силует "виростає" знизу вгору — decelerate,
+  /* Графік — лише в "Пропозиції": "Зараз" відображає поточний стан продукту
+     (плоский слайдер без графіка), графік — це і є пропоноване покращення.
+     Клип "тягнеться" за повзунками тими самими токенами, що й slider-fill
+     (quick + spring); під час активного драгу transition вимикає сам JS
+     (як і в самого слайдера), щоб рух лишався живим 1:1 з курсором. При
+     першій появі секції силует "виростає" знизу вгору — decelerate,
      screen-тривалість, один раз, без циклу. */
   .range-chart.is-good .range-chart-clip {
     transition:
@@ -1731,22 +1729,11 @@ fun SettingToggle() {
         <div class="compare-col is-bad">
           <span class="compare-tag bad">Зараз</span>
           <div class="compare-demo">
-            <div class="range-slider-group">
-              <div class="range-chart is-bad">
-                <svg viewBox="0 0 268 56" preserveAspectRatio="none">
-                  <g class="range-chart-shape">
-                    <path class="range-chart-base" d="M22 46.906L0 56H268L242 52.6496L201 43.5556L183.5 28.7179L169.5 37.3333L133 30.1538L107.5 43.5556L73 33.0256L50 0L22 46.906Z"/>
-                    <clipPath id="chartClipBefore"><rect class="range-chart-clip" id="chartClipRectBefore" x="0" y="0" width="134" height="56"/></clipPath>
-                    <path class="range-chart-active" d="M22 46.906L0 56H268L242 52.6496L201 43.5556L183.5 28.7179L169.5 37.3333L133 30.1538L107.5 43.5556L73 33.0256L50 0L22 46.906Z" clip-path="url(#chartClipBefore)"/>
-                  </g>
-                </svg>
-              </div>
-              <div class="slider is-linear" id="sliderBefore">
-                <div class="slider-track"></div>
-                <div class="slider-fill" id="sliderBeforeFill"></div>
-                <div class="slider-thumb" id="sliderBeforeMin" tabindex="0"></div>
-                <div class="slider-thumb" id="sliderBeforeMax" tabindex="0"></div>
-              </div>
+            <div class="slider is-linear" id="sliderBefore">
+              <div class="slider-track"></div>
+              <div class="slider-fill" id="sliderBeforeFill"></div>
+              <div class="slider-thumb" id="sliderBeforeMin" tabindex="0"></div>
+              <div class="slider-thumb" id="sliderBeforeMax" tabindex="0"></div>
             </div>
           </div>
         </div>
@@ -4334,7 +4321,7 @@ fun RoundNavButton(direction: Int, onClick: () -&gt; Unit) { // direction: -1 п
     }
   }
 
-  wireSlider({ sliderId: 'sliderBefore', fillId: 'sliderBeforeFill', minId: 'sliderBeforeMin', maxId: 'sliderBeforeMax', interactive: false, chartClipId: 'chartClipRectBefore' });
+  wireSlider({ sliderId: 'sliderBefore', fillId: 'sliderBeforeFill', minId: 'sliderBeforeMin', maxId: 'sliderBeforeMax', interactive: false });
   wireSlider({ sliderId: 'sliderProposal', fillId: 'sliderFill', minId: 'sliderMin', maxId: 'sliderMax', interactive: true, chartClipId: 'chartClipRectGood' });
 
   /* ── Dropdown ─────────────────────────────────────────────────────── */
